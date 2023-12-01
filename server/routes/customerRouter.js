@@ -74,8 +74,13 @@ customerRouter.post("/login", async (req, res) => {
       return res.status(401).json({ status: "error", message: "Invalid credentials" });
     }
 
-    // Assuming you handle token generation or session here
-    res.status(200).json({ status: "success", message: "Login successful" });
+    // Include user's name and email in the response
+    res.status(200).json({ 
+      status: "success", 
+      message: "Login successful",
+      userName: customer.name, // Assuming 'name' field exists in CustomerModel
+      userEmail: customer.email 
+    });
   } catch (err) {
     console.log(err);
     res.status(500).json({ status: "error", message: "Internal server error" });
