@@ -1,58 +1,52 @@
 import express from "express";
 import FeedbackModel from "../models/feedback.js";
 
-const feedbackrouter = express.Router();
+const feedbackRouter = express.Router();
 
-// get password done
-// update info done
-// create customer done
-
-feedbackrouter.post("/get-password", (req, res) => {
-  FeedbackModel
-    .find({ password: req.body.password })
-    // .select({ email: 1, password: 1 })
-    .then((result) => {
-      console.log(result);
-      res.status(201).json({ status: "success", data: result });
-    })
-    .catch((err) => {
-      console.log(err);
-      res.status(404);
-    });
-});
-
-feedbackrouter.post("/update-info", (req, res) => {
-  FeedbackModel
-    .updateOne({ email: req.body.email }, { $set: req.body })
-    .then((result) => {
-      res.status(200).json({
-        status: "success",
-        message: "Customer updated successfully",
-        result: result,
-      });
-    })
-    .catch((err) => {
-      console.log(err);
-      res
-        .status(500)
-        .json({ status: "error", message: "Internal server error" });
-    });
-});
-
-feedbackrouter.post("/create-customer", (req, res) => {
-  const Customer = new FeedbackModel({
-    name: req.body.name,
-    email: req.body.email,
-    password: req.body.password,
+// Example endpoint to submit feedback
+feedbackRouter.post("/submit", (req, res) => {
+  const newFeedback = new FeedbackModel({
+    oid: req.body.oid,
+    supplier_rating: req.body.supplier_rating,
+    service_rating: req.body.service_rating,
   });
-  Customer.save()
+
+  newFeedback.save()
     .then(() => {
-      res.status(201).json({ status: "success" });
+      res.status(201).json({ status: "success", message: "Feedback submitted successfully" });
     })
     .catch((err) => {
       console.log(err);
-      res.status(400);
+      res.status(500).json({ status: "error", message: "Error submitting feedback" });
     });
 });
 
-export default feedbackrouter;
+// Example endpoint to update feedback
+feedbackRouter.put("/update/:feedbackId", (req, res) => {
+  FeedbackModel.findByIdAndUpdate(req.params.feedbackId, req.body, { new: true })
+    .then((updatedFeedback) => {
+      res.status(200).json({ status: "success", data: updatedFeedback });
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).json({ status: "error", message: "Error updating feedback" });
+    });
+});
+
+// Example endpoint to get feedback by ID
+feedbackRouter.get("/:feedbackId", (req, res) => {
+  FeedbackModel.findById(req.params.feedbackId)
+    .then((feedback) => {
+      if (feedback) {
+        res.status(200).json({ status: "success", data: feedback });
+      } else {
+        res.status(404).json({ status: "error", message: "Feedback not found" });
+      }
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).json({ status: "error", message: "Error retrieving feedback" });
+    });
+});
+
+export default feedbackRouter;
