@@ -1,67 +1,62 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-import '../styles/signup.css';
-import { useNavigate, Link } from 'react-router-dom';
+import "./styles.css";
 
-const Signup = () => 
-{
-  const [name, setName] = useState(''); 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+import React, { useState } from "react";
+import axios from "axios";
+
+import { useNavigate, Link } from "react-router-dom";
+
+const Signup = () => {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
 
-  const validatePassword = (password) => 
-  {
+  const validatePassword = (password) => {
     const regex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
     return regex.test(password);
   };
 
-  const handleSignup = async (event) => 
-  {
+  const handleSignup = async (event) => {
     event.preventDefault();
 
-    if (!name || !email || !password || !confirmPassword) 
-    {
-      setErrorMessage('Please fill in all fields');
+    if (!name || !email || !password || !confirmPassword) {
+      setErrorMessage("Please fill in all fields");
       return;
     }
 
-    if (!validatePassword(password)) 
-    {
-      setErrorMessage('Password does not meet the required format');
+    if (!validatePassword(password)) {
+      setErrorMessage("Password does not meet the required format");
       return;
     }
 
-    if (password !== confirmPassword) 
-    {
-      setErrorMessage('Passwords do not match');
+    if (password !== confirmPassword) {
+      setErrorMessage("Passwords do not match");
       return;
     }
 
-    try 
-    {
-      const response = await axios.post('http://localhost:3000/customer/create-customer', {
-        name,
-        email,
-        password,
-      });
+    try {
+      const response = await axios.post(
+        "http://localhost:3000/customer/create-customer",
+        {
+          name,
+          email,
+          password,
+        }
+      );
 
-      console.log('API Response:', response.data);
-      navigate('/login');
-    } catch (error) 
-    {
-      setErrorMessage('Signup failed. Please try again.');
-      console.error('Error during signup:', error);
+      console.log("API Response:", response.data);
+      navigate("/login");
+    } catch (error) {
+      setErrorMessage("Signup failed. Please try again.");
+      console.error("Error during signup:", error);
     }
   };
 
   return (
     <div className="signup-page">
-      <div className="signup-header">
-        Sign Up for Management System
-      </div>
+      <div className="signup-header">Sign Up for Management System</div>
       <div className="partition"></div>
       <form className="form" onSubmit={handleSignup}>
         <div>
