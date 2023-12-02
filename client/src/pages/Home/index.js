@@ -1,6 +1,7 @@
 import "./styles.css";
 
 import React from "react";
+import { Button, Container } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 
 const Home = () => {
@@ -18,21 +19,26 @@ const Home = () => {
   };
 
   return (
-    <div className="home-page">
-      <header className="home-header">
+    <Container className="d-flex flex-column justify-content-center align-items-center vh-100">
+      <div>
         <h1>Welcome to the Management System</h1>
         <p>{`Logged in as ${userName} (${userEmail})`}</p>
-      </header>
-      <main className="home-content">
-        <p>This is the home page, accessible only to logged-in users.</p>
-        {/* Additional content and components can be added here */}
-      </main>
-      <footer className="home-footer">
-        <button onClick={handleLogout} className="logout-button">
-          Logout
-        </button>
-      </footer>
-    </div>
+      </div>
+
+      <p>This is the home page, accessible only to logged-in users.</p>
+
+      <div className="d-flex gap-2">
+        <Button
+          onClick={() => {
+            navigate("/customer-dashboard");
+          }}
+        >
+          Customer Dashboard
+        </Button>
+
+        <Button onClick={handleLogout}>Logout</Button>
+      </div>
+    </Container>
   );
 };
 
