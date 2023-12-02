@@ -44,38 +44,24 @@ supplierRouter.post("/get-password", (req, res) => {
     });
 });
 
-supplierRouter.post("/update-info", (req, res) => {
-  SupplierModel
-    .updateOne({ email: req.body.email }, { $set: req.body })
-    .then((result) => {
-      res.status(200).json({
+supplierRouter.post("/create-Supplier", (req, res) => {
+  const supplier = new SupplierModel({
+    name: req.body.name,
+    email: req.body.email,
+    password: req.body.password, // Ensure this is hashed in a real-world application
+  });
+
+  supplier.save()
+    .then((savedSupplier) => {
+      res.status(201).json({
         status: "success",
-        message: "Supplier updated successfully",
-        result: result,
+        message: "Supplier created successfully",
+        supplierId: savedSupplier._id // Returning the ID of the newly created supplier
       });
     })
     .catch((err) => {
       console.log(err);
-      res
-        .status(500)
-        .json({ status: "error", message: "Internal server error" });
+      res.status(400).json({ status: "error", message: "Error creating supplier" });
     });
 });
-
-supplierRouter.post("/create-Supplier", (req, res) => {
-  const Supplier = new SupplierModel({
-    name: req.body.name,
-    email: req.body.email,
-    password: req.body.password,
-  });
-  Supplier.save()
-    .then(() => {
-      res.status(201).json({ status: "success" });
-    })
-    .catch((err) => {
-      console.log(err);
-      res.status(400);
-    });
-});
-
 export default supplierRouter;

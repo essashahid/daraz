@@ -72,4 +72,19 @@ productRouter.delete("/delete-product/:productId", async (req, res) => {
   }
 });
 
+productRouter.get("/search", async (req, res) => {
+    try {
+      const searchTerm = req.query.q; // Assuming the query param is 'q'
+      const products = await ProductModel.find({
+        name: { $regex: searchTerm, $options: "i" } // Case-insensitive regex search
+      });
+  
+      res.status(200).json({ status: "success", data: products });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ status: "error", message: "Error during search" });
+    }
+  });
+  
+
 export default productRouter;

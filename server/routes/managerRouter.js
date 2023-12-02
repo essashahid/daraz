@@ -67,13 +67,18 @@ managerRouter.post("/create-manager", (req, res) => {
     email: req.body.email,
     password: req.body.password,
   });
+
   manager.save()
-    .then(() => {
-      res.status(201).json({ status: "success" });
+    .then((savedManager) => { // Note the change here
+      res.status(201).json({
+        status: "success",
+        message: "Manager created successfully",
+        managerId: savedManager._id // Returning the ID of the newly created manager
+      });
     })
     .catch((err) => {
       console.log(err);
-      res.status(400);
+      res.status(400).json({ status: "error", message: "Error creating manager" });
     });
 });
 

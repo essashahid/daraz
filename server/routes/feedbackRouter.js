@@ -3,8 +3,8 @@ import FeedbackModel from "../models/feedback.js";
 
 const feedbackRouter = express.Router();
 
-// Example endpoint to submit feedback
-feedbackRouter.post("/submit", (req, res) => {
+feedbackRouter.post("/submit", (req, res) => 
+{
   const newFeedback = new FeedbackModel({
     oid: req.body.oid,
     supplier_rating: req.body.supplier_rating,
@@ -21,7 +21,6 @@ feedbackRouter.post("/submit", (req, res) => {
     });
 });
 
-// Example endpoint to update feedback
 feedbackRouter.put("/update/:feedbackId", (req, res) => {
   FeedbackModel.findByIdAndUpdate(req.params.feedbackId, req.body, { new: true })
     .then((updatedFeedback) => {
@@ -33,8 +32,8 @@ feedbackRouter.put("/update/:feedbackId", (req, res) => {
     });
 });
 
-// Example endpoint to get feedback by ID
-feedbackRouter.get("/:feedbackId", (req, res) => {
+feedbackRouter.get("/:feedbackId", (req, res) => 
+{
   FeedbackModel.findById(req.params.feedbackId)
     .then((feedback) => {
       if (feedback) {

@@ -74,4 +74,19 @@ orderRouter.delete("/delete-order/:orderId", async (req, res) => {
   }
 });
 
+orderRouter.get("/get-orders-by-customer/:customerId", async (req, res) => {
+    try {
+      const orders = await OrderModel.find({ cid: req.params.customerId });
+  
+      if (!orders || orders.length === 0) {
+        return res.status(404).json({ status: "error", message: "No orders found for this customer" });
+      }
+  
+      res.status(200).json({ status: "success", data: orders });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ status: "error", message: "Error retrieving orders" });
+    }
+  });
+
 export default orderRouter;

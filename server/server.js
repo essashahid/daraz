@@ -5,6 +5,11 @@ import cors from 'cors';
 import customerRouter from './routes/customerRouter.js';
 import supplierRouter from './routes/supplierRouter.js';
 import managerRouter from './routes/managerRouter.js';
+import productRouter from './routes/productRouter.js';
+import orderRouter from './routes/orderRouter.js';
+import orderdetailsRouter from './routes/orderdetailsRouter.js';
+
+
 import { init_db } from "./mongo_init.js";
 
 dotenv.config();
@@ -35,4 +40,9 @@ app.use("/", router);
 router.use("/customer", customerRouter);
 router.use("/supplier", supplierRouter);
 router.use("/manager", managerRouter);
+router.use("/product", productRouter);
+router.use("/order", orderRouter);
+router.use("/orderdetails", orderdetailsRouter);
+
+
 
