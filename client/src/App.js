@@ -1,12 +1,21 @@
 import "./App.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
 import Signup from "./pages/Signup";
 import ProtectedRoute from "./providers/Auth/ProtectedRoute";
+
+import AppLayout from "./components/AppLayout";
 import CustomerDashboard from "./components/CustomerDashboard";
+import ManagerDashboard from "./components/ManagerDashboard";
+import SupplierDashboard from "./components/SupplierDashboard";
 
 function App() {
   return (
@@ -16,10 +25,21 @@ function App() {
         <Route path="/signup" element={<Signup />} />
 
         <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <Navigate to="/home" />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/home"
           element={
             <ProtectedRoute>
-              <Home />
+              <AppLayout>
+                <Home />
+              </AppLayout>
             </ProtectedRoute>
           }
         />
@@ -27,7 +47,31 @@ function App() {
           path="/customer-dashboard"
           element={
             <ProtectedRoute>
-              <CustomerDashboard />
+              <AppLayout>
+                <CustomerDashboard />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/manager-dashboard"
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <ManagerDashboard />
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/supplier-dashboard"
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <SupplierDashboard />
+              </AppLayout>
             </ProtectedRoute>
           }
         />

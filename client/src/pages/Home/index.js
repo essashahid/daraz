@@ -9,7 +9,7 @@ const Home = () => {
 
   const userName = localStorage.getItem("userName");
   const userEmail = localStorage.getItem("userEmail");
-  console.log("Retrieved user info:", userName, userEmail);
+  const role = localStorage.getItem("role");
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -18,6 +18,17 @@ const Home = () => {
     navigate("/login");
   };
 
+  function getLabel() {
+    if (role === "customer") {
+      return "Do Some Shopping";
+    } else if (role === "manager") {
+      return "Manager Dashboard";
+    } else if (role === "supplier") {
+      return "Supplier Dashboard";
+    } else {
+      return "Dashboard";
+    }
+  }
   return (
     <Container className="d-flex flex-column justify-content-center align-items-center vh-100">
       <div>
@@ -30,10 +41,14 @@ const Home = () => {
       <div className="d-flex gap-2">
         <Button
           onClick={() => {
+            if (role === "customer") navigate("/customer-dashboard");
+            if (role === "manager") navigate("/manager-dashboard");
+            if (role === "supplier") navigate("/supplier-dashboard");
+
             navigate("/customer-dashboard");
           }}
         >
-          Customer Dashboard
+          {getLabel()}
         </Button>
 
         <Button onClick={handleLogout}>Logout</Button>

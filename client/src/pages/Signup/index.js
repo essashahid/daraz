@@ -1,12 +1,13 @@
 import "./styles.css";
 
-import React from "react";
 import axios from "axios";
-import { useNavigate, Link } from "react-router-dom";
-import { useForm } from "react-hook-form";
-import Card from "react-bootstrap/Card";
+import React from "react";
 import Button from "react-bootstrap/Button";
+import Card from "react-bootstrap/Card";
 import Form from "react-bootstrap/Form";
+import { useForm } from "react-hook-form";
+import { Link, useNavigate, Navigate } from "react-router-dom";
+import api from "../../api";
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -18,25 +19,25 @@ const Signup = () => {
   } = useForm();
 
   const onSignup = async (data) => {
-    const { name, email, password, confirmPassword, role } = data;
-
-    if (password !== confirmPassword) {
-      // Handle password mismatch here
-      return;
-    }
-
     try {
-      const response = await axios.post(
-        "http://localhost:3000/customer/create-customer",
-        { name, email, password, role }
-      );
+      const response = await axios.post(`${api}/user/signup`, data);
+      const userData = await response.data;
 
-      console.log("API Response:", response.data);
-      navigate("/login");
-    } catch (error) {
-      // Handle signup error here
-    }
+      localStorage.setItem("token", userData.token);
+      localStorage.setItem("role", data.role);
+      localStorage.setItem("userID", userData?.userID);
+      localStorage.setItem("userName", userData.userName);
+      localStorage.setItem("userEmail", userData.userEmail);
+
+      navigate("/home");
+    } catch (error) {}
   };
+
+  const token = localStorage.getItem("token");
+
+  if (token) {
+    return <Navigate to="/home" />;
+  }
 
   return (
     <div
@@ -47,7 +48,6 @@ const Signup = () => {
         <Card.Body>
           <Card.Title className="text-center">Sign Up</Card.Title>
           <Form onSubmit={handleSubmit(onSignup)}>
-            {/* Name Input */}
             <Form.Group className="mb-3">
               <Form.Label>Name</Form.Label>
               <Form.Control
@@ -68,7 +68,6 @@ const Signup = () => {
               <Form.Control
                 {...register("email", {
                   required: "Email is required",
-                  pattern: /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$/,
                 })}
                 type="email"
                 placeholder="Enter email"
@@ -80,7 +79,6 @@ const Signup = () => {
               )}
             </Form.Group>
 
-            {/* Password Input */}
             <Form.Group className="mb-3">
               <Form.Label>Password</Form.Label>
               <Form.Control
@@ -88,12 +86,12 @@ const Signup = () => {
                   required: "Password is required",
                   minLength: {
                     value: 8,
-                    message: "Password must be at least 8 characters"
+                    message: "Password must be at least 8 characters",
                   },
                   pattern: {
                     value: /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/,
-                    message: "Password must contain letters and numbers"
-                  }
+                    message: "Password must contain letters and numbers",
+                  },
                 })}
                 type="password"
                 placeholder="Password"
@@ -105,7 +103,6 @@ const Signup = () => {
               )}
             </Form.Group>
 
-            {/* Confirm Password Input */}
             <Form.Group className="mb-3">
               <Form.Label>Confirm Password</Form.Label>
               <Form.Control
@@ -124,16 +121,15 @@ const Signup = () => {
               )}
             </Form.Group>
 
-            {/* Role Dropdown Menu */}
             <Form.Group className="mb-3">
               <Form.Label>Role</Form.Label>
-              <Form.Select {...register("role", { required: "Role is required" })}>
+              <Form.Select
+                {...register("role", { required: "Role is required" })}
+              >
                 <option value="">Select a role</option>
                 <option value="customer">customer</option>
                 <option value="supplier">supplier</option>
                 <option value="manager">manager</option>
-
-                {/* Additional roles can be added here */}
               </Form.Select>
               {errors.role && (
                 <Form.Text className="text-danger">
@@ -147,6 +143,7 @@ const Signup = () => {
             </Button>
           </Form>
         </Card.Body>
+
         <Card.Footer className="text-center">
           Already have an account? <Link to="/login">Login</Link>
         </Card.Footer>

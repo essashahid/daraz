@@ -5,8 +5,9 @@ import React from "react";
 import Button from "react-bootstrap/Button";
 import Card from "react-bootstrap/Card";
 import Form from "react-bootstrap/Form";
+
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate, Navigate } from "react-router-dom";
 import api from "../../api";
 
 const Login = () => {
@@ -17,26 +18,37 @@ const Login = () => {
     formState: { errors },
   } = useForm();
 
+  const [loginError, setLoginError] = React.useState(null);
+
   async function onLogin(data) {
     const { email, password } = data;
 
     try {
-      const response = await axios.post(`${api}/customer/login`, {
+      const response = await axios.post(`${api}/user/login`, {
         email: email,
         password: password,
       });
 
       console.log("Login Response:", response);
-      console.log("API Response:", response.data);
+      const data = await response.data;
 
-      localStorage.setItem("token", response.data.token); // Assuming token is part of the response
-      localStorage.setItem("userName", response.data.userName); // Assuming userName is part of the response
-      localStorage.setItem("userEmail", response.data.userEmail); // Assuming userEmail is part of the response
+      localStorage.setItem("userID", data?.userID);
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("userName", data.userName);
+      localStorage.setItem("userEmail", data.userEmail);
+      localStorage.setItem("role", data.role);
 
       navigate("/home");
     } catch (error) {
+      setLoginError("Invalid credentials");
       console.error("Error during login:", error);
     }
+  }
+
+  const token = localStorage.getItem("token");
+
+  if (token) {
+    return <Navigate to="/home" />;
   }
 
   return (
@@ -53,7 +65,6 @@ const Login = () => {
               <Form.Control
                 {...register("email", {
                   required: "Email is required",
-                  pattern: /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$/,
                 })}
                 type="email"
                 placeholder="Enter email"
@@ -71,7 +82,6 @@ const Login = () => {
                 {...register("password", {
                   required: "Password is required",
                   minLength: 8,
-                  pattern: /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/,
                 })}
                 type="password"
                 placeholder="Password"
@@ -83,11 +93,18 @@ const Login = () => {
               )}
             </Form.Group>
 
-            <Button variant="primary" type="submit">
+            <Button className="w-100" variant="primary" type="submit">
               Login
             </Button>
+
+            {loginError && (
+              <Form.Text className="text-danger mt-3">{loginError}</Form.Text>
+            )}
           </Form>
         </Card.Body>
+        <Card.Footer className="text-center">
+          Don't have an account? <Link to="/signup">Signup</Link>
+        </Card.Footer>{" "}
       </Card>
     </div>
   );

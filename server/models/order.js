@@ -1,10 +1,19 @@
 import mongoose from "mongoose";
 const orderSchema = new mongoose.Schema({
-  date: {type: Date, required: true,},
-  amount: {type: Number, required: true,},
-  cid: {type: mongoose.Schema.Types.ObjectId, ref: "Customer", required: true,},
-  sid: {type: mongoose.Schema.Types.ObjectId, ref: "Supplier", required: true,},
-  mid: {type: mongoose.Schema.Types.ObjectId, ref: "Manager", required: true,},
+  date: { type: Date, required: true },
+  amount: { type: Number, required: true },
+  customerID: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Customer",
+    required: true,
+  },
+  products: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Product",
+      required: true,
+    },
+  ],
 });
 
 const OrderModel = mongoose.model("Order", orderSchema);

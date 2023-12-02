@@ -1,52 +1,57 @@
 import axios from "axios";
-import { jwtDecode } from "jwt-decode";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
+
+import { Button, Card, Col, Container, Row } from "react-bootstrap";
 import api from "../../api";
 
 const CustomerDashboard = () => {
   const [products, setProducts] = useState([]);
   const [cart, setCart] = useState([]);
   const [orders, setOrders] = useState([]);
+  const customerID = localStorage.getItem("userID");
+  const token = localStorage.getItem("token");
+
+  const fetchProducts = useCallback(async () => {
+    if (!!customerID) {
+      try {
+        const response = await axios.get(`${api}/product/list`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const products = response.data.data;
+
+        setProducts(products);
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      }
+    }
+  }, [customerID, token]);
+
+  const fetchOrders = useCallback(async () => {
+    if (!!customerID) {
+      try {
+        const response = await axios.get(
+          `${api}/order/customer-orders/${customerID}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        const data = response.data.data;
+        setOrders(data);
+      } catch (error) {
+        console.error("Error fetching orders:", error);
+        setOrders([]);
+      }
+    }
+  }, [customerID, token]);
 
   useEffect(() => {
-    console.log("Fetching products...");
-    axios
-      .get(`${api}/product/search`)
-      .then((response) => {
-        console.log("Products fetched:", response.data.data);
-        setProducts(response.data.data);
-      })
-      .catch((error) => {
-        console.error("Error fetching products:", error);
-      });
-
-    // Retrieve and decode JWT
-    try {
-      const token = localStorage.getItem("token");
-      if (token) {
-        const decoded = jwtDecode(token);
-        const customerId = decoded.customerId;
-        fetchOrders(customerId);
-      } else {
-        console.log("No token found or token is invalid");
-      }
-    } catch (error) {
-      console.error("Error decoding token:", error);
-    }
-  }, []);
-
-  const fetchOrders = async (customerId) => {
-    console.log("fetchOrders called with customerId:", customerId);
-    try {
-      const response = await axios.get(
-        `${api}/order/get-orders-by-customer/${customerId}`
-      );
-      console.log("Orders fetched:", response.data.data);
-      setOrders(response.data.data);
-    } catch (error) {
-      console.error("Error fetching orders:", error);
-    }
-  };
+    fetchProducts();
+    fetchOrders();
+  }, [fetchOrders, fetchProducts]);
 
   const addToCart = (product) => {
     const newCart = [...cart, product];
@@ -60,44 +65,27 @@ const CustomerDashboard = () => {
 
   const placeOrder = async () => {
     try {
-      const totalAmount = cart.reduce((acc, item) => acc + item.price, 0);
-      const orderDate = new Date().toISOString();
-      const supplierId = "656a58696679a30113fe3cc5";
-      const managerId = "656a57b84e1e38ed89796f25";
+      const amount = cart.reduce((acc, item) => acc + item.price, 0);
+      const productIDs = cart.map((item) => item._id);
 
-      const token = localStorage.getItem("token");
-      let customerId;
-
-      if (token) {
-        const decoded = jwtDecode(token);
-        customerId = decoded.customerId;
-      }
-
-      if (!customerId) {
-        alert("Customer ID is not available");
-        return;
-      }
-
-      const orderResponse = await axios.post(`${api}/order/create-order`, {
-        date: orderDate,
-        amount: totalAmount,
-        cid: customerId,
-        sid: supplierId,
-        mid: managerId,
-      });
-
-      await Promise.all(
-        cart.map((item) => {
-          return axios.post(`${api}/orderdetails/add-order-details`, {
-            oid: orderResponse.data.data._id,
-            pid: item._id,
-            supplierId: item.supplierId,
-          });
-        })
+      const response = await axios.post(
+        `${api}/order/place`,
+        {
+          customerID: customerID,
+          products: productIDs,
+          amount,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
 
+      console.log("Order placed:", response);
+      alert("Order placed successfully!");
       setCart([]);
-      fetchOrders(); // Fetch orders again to update the list
+      fetchOrders();
       alert("Order placed successfully!");
     } catch (error) {
       console.error("Error placing order:", error);
@@ -106,53 +94,65 @@ const CustomerDashboard = () => {
   };
 
   return (
-    <div className="customer-dashboard">
+    <Container>
       <h1>Customer Dashboard</h1>
-      <div className="products">
+      <Row xs={1} md={2} lg={3} className="g-4">
         {products.map((product) => (
-          <div key={product._id} className="product">
-            <h3>{product.name}</h3>
-            <p>Rating: {product.rating}</p>
-            <p>Price: ${product.price}</p>
-            <button
-              className="add-to-cart-btn"
-              onClick={() => addToCart(product)}
-            >
-              Add to Cart
-            </button>
-          </div>
+          <Col key={product._id}>
+            <Card className="mb-3">
+              <Card.Body>
+                <Card.Title>{product.name}</Card.Title>
+                <Card.Text>Rating: {product.rating}</Card.Text>
+                <Card.Text>Price: ${product.price}</Card.Text>
+                <Button variant="primary" onClick={() => addToCart(product)}>
+                  Add to Cart
+                </Button>
+              </Card.Body>
+            </Card>
+          </Col>
         ))}
-      </div>
-      <div className="cart">
-        {cart.map((item) => (
-          <div key={item._id} className="cart-item">
-            <p>{item.name}</p>
-            <button
-              className="remove-from-cart-btn"
-              onClick={() => removeFromCart(item._id)}
-            >
-              Remove from Cart
-            </button>
-          </div>
-        ))}
-        {cart.length > 0 && (
-          <button className="place-order-btn" onClick={placeOrder}>
+      </Row>
+
+      {cart.length > 0 && (
+        <div>
+          {cart.map((item) => (
+            <Card key={item._id} className="cart-item mb-2">
+              <Card.Body>
+                <Card.Title>{item.name}</Card.Title>
+                <Button
+                  variant="danger"
+                  className="remove-from-cart-btn"
+                  onClick={() => removeFromCart(item._id)}
+                >
+                  Remove from Cart
+                </Button>
+              </Card.Body>
+            </Card>
+          ))}
+
+          <Button
+            className="place-order-btn mt-3"
+            variant="success"
+            onClick={placeOrder}
+          >
             Place Order
-          </button>
-        )}
-      </div>
-      <div className="orders">
-        <h2>Your Orders</h2>
-        {orders.map((order) => (
-          <div key={order._id} className="order">
-            <p>Order ID: {order._id}</p>
-            <p>Date: {new Date(order.date).toLocaleDateString()}</p>
-            <p>Total Amount: ${order.amount}</p>
-            {/* Add more details as needed */}
-          </div>
-        ))}
-      </div>
-    </div>
+          </Button>
+        </div>
+      )}
+
+      {orders.length > 0 && (
+        <div>
+          <h2>Your Orders</h2>
+          {orders.map((order) => (
+            <div key={order._id} className="order">
+              <p>Order ID: {order._id}</p>
+              <p>Date: {new Date(order.date).toLocaleDateString()}</p>
+              <p>Total Amount: ${order.amount}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </Container>
   );
 };
 
