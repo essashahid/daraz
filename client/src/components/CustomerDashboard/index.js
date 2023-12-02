@@ -1,7 +1,7 @@
 import axios from "axios";
 import React, { useCallback, useEffect, useState } from "react";
 
-import { Button, Card, Col, Container, Row } from "react-bootstrap";
+import { Button, Card, CardBody, Col, Container, Row } from "react-bootstrap";
 import api from "../../api";
 
 const CustomerDashboard = () => {
@@ -86,7 +86,6 @@ const CustomerDashboard = () => {
       alert("Order placed successfully!");
       setCart([]);
       fetchOrders();
-      alert("Order placed successfully!");
     } catch (error) {
       console.error("Error placing order:", error);
       alert("Failed to place the order.");
@@ -144,11 +143,18 @@ const CustomerDashboard = () => {
         <div>
           <h2>Your Orders</h2>
           {orders.map((order) => (
-            <div key={order._id} className="order">
-              <p>Order ID: {order._id}</p>
-              <p>Date: {new Date(order.date).toLocaleDateString()}</p>
-              <p>Total Amount: ${order.amount}</p>
-            </div>
+            <Card
+              key={order._id}
+              style={{
+                marginBottom: "10px",
+              }}
+            >
+              <CardBody>
+                <p>Order ID: {order._id}</p>
+                <p>Date: {new Date(order.date).toLocaleDateString()}</p>
+                <p>Total Amount: ${order.amount}</p>
+              </CardBody>
+            </Card>
           ))}
         </div>
       )}
