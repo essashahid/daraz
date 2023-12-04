@@ -215,121 +215,124 @@ return (
       />
     </Form.Group>
 
+    {/* Products Display */}
     <Row xs={1} md={2} lg={3} className="g-4">
-  {products
-    .filter(product => 
-      product.name.toLowerCase().includes(searchQuery.toLowerCase().trim())
-    )
-    .map((product) => (
-      <Col key={product._id}>
-        <Card className="mb-3">
-          <Card.Body>
-            <Card.Title>{product.name}</Card.Title>
-            <Card.Text>Rating: {product.rating}</Card.Text>
-            <Card.Text>Price: ${product.price}</Card.Text>
-            {/* Display stock status */}
-            <Card.Text>
-              {product.inStock ? 'In Stock' : 'Out of Stock'}
-            </Card.Text>
-            <Button 
-              variant="primary" 
-              onClick={() => addToCart(product)}
-              disabled={!product.inStock} // Disable if out of stock
-            >
-              Add to Cart
-            </Button>
-          </Card.Body>
-        </Card>
-      </Col>
-    ))}
-</Row>
-    {cart.length > 0 && (
-        <div>
-          {cart.map((item) => (
-            <Card key={item._id} style={styles.card}>
-              <CardBody style={styles.cardBody}>
-                <Card.Title>{item.name}</Card.Title>
-                <Button
-                  variant="danger"
-                  style={styles.button}
-                  onClick={() => removeFromCart(item._id)}
+      {products
+        .filter(product => 
+          product.name.toLowerCase().includes(searchQuery.toLowerCase().trim())
+        )
+        .map((product) => (
+          <Col key={product._id}>
+            <Card className="mb-3">
+              <Card.Body>
+                <Card.Title>{product.name}</Card.Title>
+                <Card.Text>Rating: {product.rating}</Card.Text>
+                <Card.Text>Price: ${product.price}</Card.Text>
+                <Card.Text>
+                  {product.inStock ? 'In Stock' : 'Out of Stock'}
+                </Card.Text>
+                <Button 
+                  variant="primary" 
+                  onClick={() => addToCart(product)}
+                  disabled={!product.inStock}
                 >
-                  Remove from Cart
+                  Add to Cart
                 </Button>
-              </CardBody>
+              </Card.Body>
             </Card>
-          ))}
-          <Button
-            className="place-order-btn mt-3"
-            variant="success"
-            style={styles.button}
-            onClick={placeOrder}
-          >
-            Place Order
-          </Button>
-        </div>
-      )}
+          </Col>
+        ))}
+    </Row>
 
-      {/* Orders and Feedback Section */}
-      {orders.length > 0 && (
-        <div>
-          <h2>Your Orders</h2>
-          {orders.map((order) => (
+    {/* Cart Section */}
+    {cart.length > 0 && (
+      <div>
+        {cart.map((item) => (
+          <Card key={item._id} style={styles.card}>
+            <CardBody style={styles.cardBody}>
+              <Card.Title>{item.name}</Card.Title>
+              <Button
+                variant="danger"
+                style={styles.button}
+                onClick={() => removeFromCart(item._id)}
+              >
+                Remove from Cart
+              </Button>
+            </CardBody>
+          </Card>
+        ))}
+        <Button
+          className="place-order-btn mt-3"
+          variant="success"
+          style={styles.button}
+          onClick={placeOrder}
+        >
+          Place Order
+        </Button>
+      </div>
+    )}
+
+    {/* Orders and Feedback Section */}
+    {orders.length > 0 && (
+      <div>
+        <h2>Your Orders</h2>
+        {orders.map((order) => (
+          order.products && order.products.length > 0 ? (
             <Card key={order._id} style={styles.card}>
               <CardBody style={styles.cardBody}>
-          {/* Order details */}
-          {order.products.map((product) => (
-            <div key={product._id}>
-              <h5>{product.name}</h5>
-              <Form>
-                {/* Supplier Rating */}
-                <Form.Group>
-                  <Form.Label>Supplier Rating</Form.Label>
-                  <StarRatings
-                    rating={feedbacks[order._id]?.[product._id]?.supplier_rating || 0}
-                    starRatedColor="blue"
-                    changeRating={(newRating) => handleFeedbackChange(order._id, product._id, 'supplier_rating', newRating)}
-                    numberOfStars={5}
-                    name='supplier_rating'
-                  />
-                </Form.Group>
+                {order.products.map((product) => (
+                  <div key={product._id}>
+                    <h5>{product.name}</h5>
+                    <Form>
+                      {/* Supplier Rating */}
+                      <Form.Group>
+                        <Form.Label>Supplier Rating</Form.Label>
+                        <StarRatings
+                          rating={feedbacks[order._id]?.[product._id]?.supplier_rating || 0}
+                          starRatedColor="blue"
+                          changeRating={(newRating) => handleFeedbackChange(order._id, product._id, 'supplier_rating', newRating)}
+                          numberOfStars={5}
+                          name='supplier_rating'
+                        />
+                      </Form.Group>
 
-                {/* Service Rating */}
-                <Form.Group>
-                  <Form.Label>Service Rating</Form.Label>
-                  <StarRatings
-                    rating={feedbacks[order._id]?.[product._id]?.service_rating || 0}
-                    starRatedColor="blue"
-                    changeRating={(newRating) => handleFeedbackChange(order._id, product._id, 'service_rating', newRating)}
-                    numberOfStars={5}
-                    name='service_rating'
-                  />
-                </Form.Group>
+                      {/* Service Rating */}
+                      <Form.Group>
+                        <Form.Label>Service Rating</Form.Label>
+                        <StarRatings
+                          rating={feedbacks[order._id]?.[product._id]?.service_rating || 0}
+                          starRatedColor="blue"
+                          changeRating={(newRating) => handleFeedbackChange(order._id, product._id, 'service_rating', newRating)}
+                          numberOfStars={5}
+                          name='service_rating'
+                        />
+                      </Form.Group>
 
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <Button 
-                    variant="primary" 
-                    onClick={() => submitFeedback(order._id, product._id)}
-                    disabled={feedbacks[order._id]?.[product._id]?.submitted}
-                  >
-                    Submit Feedback
-                  </Button>
-                  {feedbacks[order._id]?.[product._id]?.submitted && (
-                    <span style={{ marginLeft: '10px', color: 'green' }}>
-                      Feedback Submitted
-                    </span>
-                  )}
-                </div>
-              </Form>
-            </div>
-          ))}
-        </CardBody>
-      </Card>
-    ))}
-  </div>
-)}
-    </Container>
-  );
+                      <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <Button 
+                          variant="primary" 
+                          onClick={() => submitFeedback(order._id, product._id)}
+                          disabled={feedbacks[order._id]?.[product._id]?.submitted}
+                        >
+                          Submit Feedback
+                        </Button>
+                        {feedbacks[order._id]?.[product._id]?.submitted && (
+                          <span style={{ marginLeft: '10px', color: 'green' }}>
+                            Feedback Submitted
+                          </span>
+                        )}
+                      </div>
+                    </Form>
+                  </div>
+                ))}
+              </CardBody>
+            </Card>
+          ) : null
+        ))}
+      </div>
+    )}
+  </Container>
+);
 };
 
 export default CustomerDashboard;
