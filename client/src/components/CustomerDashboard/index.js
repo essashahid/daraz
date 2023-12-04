@@ -1,26 +1,96 @@
 import axios from "axios";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useContext, useEffect, useState } from "react";
+import { useDisclosure } from "@mantine/hooks";
 
-import { Button, Card, CardBody, Col, Container, Row, Form } from "react-bootstrap";
+import { Form } from "react-bootstrap";
+import StarRatings from "react-star-ratings";
 import api from "../../api";
-import StarRatings from 'react-star-ratings';
 
+import {
+  Box,
+  Button,
+  Card,
+  Center,
+  Divider,
+  Drawer,
+  Grid,
+  Text,
+  TextInput,
+  Title,
+} from "@mantine/core";
+import { CartContext } from "../../contexts/cart";
 
+function CartDrawer({ cart, opened, close, removeFromCart, placeOrder }) {
+  return (
+    <Drawer opened={opened} onClose={close} title="Cart">
+      {cart.length === 0 ? (
+        <Center>
+          <Text>Cart is empty</Text>
+        </Center>
+      ) : (
+        <>
+          {cart.length > 0 && (
+            <div>
+              {cart.map((item) => (
+                <Card key={item._id}>
+                  <Card.Section>
+                    <Title>{item.name}</Title>
+                    <Button
+                      variant="danger"
+                      onClick={() => removeFromCart(item._id)}
+                    >
+                      Remove from Cart
+                    </Button>
+                  </Card.Section>
+                </Card>
+              ))}
+              <Button
+                className="place-order-btn mt-3"
+                variant="success"
+                onClick={placeOrder}
+              >
+                Place Order
+              </Button>
+            </div>
+          )}
+        </>
+      )}
+    </Drawer>
+  );
+}
 
+function ProductCard({ product, addToCart }) {
+  return (
+    <Card shadow="sm" padding="lg" radius="md" withBorder>
+      <Card.Section inheritPadding>
+        <Title order={3}>{product.name}</Title>
+      </Card.Section>
+      <Divider />
+      <Text>Rating: {product.rating}</Text>
+      <Text>Price: ${product.price}</Text>
+      <Text>{product.inStock ? "In Stock" : "Out of Stock"}</Text>
+      <Button
+        variant="primary"
+        onClick={() => addToCart(product)}
+        disabled={!product.inStock}
+      >
+        Add to Cart
+      </Button>
+    </Card>
+  );
+}
 
 const CustomerDashboard = () => {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [products, setProducts] = useState([]);
-  const [cart, setCart] = useState([]);
+  const { cart, setCart } = useContext(CartContext);
+
   const [orders, setOrders] = useState([]);
   const customerID = localStorage.getItem("userID");
   const [feedbacks, setFeedbacks] = useState(() => {
-  const savedFeedbacks = localStorage.getItem('feedbacks');
-  return savedFeedbacks ? JSON.parse(savedFeedbacks) : {};
+    const savedFeedbacks = localStorage.getItem("feedbacks");
+    return savedFeedbacks ? JSON.parse(savedFeedbacks) : {};
   });
-
-
-
 
   const token = localStorage.getItem("token");
 
@@ -66,7 +136,11 @@ const CustomerDashboard = () => {
     fetchOrders();
   }, [fetchOrders, fetchProducts]);
 
+  const [opened, { open, close }] = useDisclosure(false);
+
   const addToCart = (product) => {
+    open();
+
     const newCart = [...cart, product];
     setCart(newCart);
   };
@@ -120,219 +194,178 @@ const CustomerDashboard = () => {
   };
 
   // Adjusted function to submit feedback for a product
- const submitFeedback = async (orderId, productId) => {
-  const currentFeedback = feedbacks[orderId]?.[productId];
-  if (!currentFeedback) {
-    alert("Please provide feedback before submitting.");
-    return;
-  }
+  const submitFeedback = async (orderId, productId) => {
+    const currentFeedback = feedbacks[orderId]?.[productId];
+    if (!currentFeedback) {
+      alert("Please provide feedback before submitting.");
+      return;
+    }
 
-  if (currentFeedback.submitted) {
-    alert("Feedback for this product has already been submitted.");
-    return;
-  }
+    if (currentFeedback.submitted) {
+      alert("Feedback for this product has already been submitted.");
+      return;
+    }
 
-  try {
-    await axios.post(
-      `${api}/feedback/submit`,
-      {
-        oid: orderId,
-        pid: productId,
-        supplier_rating: currentFeedback.supplier_rating,
-        service_rating: currentFeedback.service_rating,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
+    try {
+      await axios.post(
+        `${api}/feedback/submit`,
+        {
+          oid: orderId,
+          pid: productId,
+          supplier_rating: currentFeedback.supplier_rating,
+          service_rating: currentFeedback.service_rating,
         },
-      }
-    );
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-    // Update the feedbacks state with the submitted feedback
-    const updatedFeedbacks = {
-      ...feedbacks,
-      [orderId]: {
-        ...feedbacks[orderId],
-        [productId]: {
-          ...currentFeedback,
-          submitted: true, // Set the submitted flag to true
+      // Update the feedbacks state with the submitted feedback
+      const updatedFeedbacks = {
+        ...feedbacks,
+        [orderId]: {
+          ...feedbacks[orderId],
+          [productId]: {
+            ...currentFeedback,
+            submitted: true, // Set the submitted flag to true
+          },
         },
-      },
-    };
-    
-    setFeedbacks(updatedFeedbacks);
+      };
 
-    // Save the updated feedbacks to localStorage
-    localStorage.setItem('feedbacks', JSON.stringify(updatedFeedbacks));
+      setFeedbacks(updatedFeedbacks);
 
-    alert('Feedback submitted successfully!');
-  } catch (error) {
-    console.error("Error submitting feedback:", error);
-    alert("Failed to submit feedback.");
-  }
-};
+      // Save the updated feedbacks to localStorage
+      localStorage.setItem("feedbacks", JSON.stringify(updatedFeedbacks));
 
-const styles = {
-  card: {
-    boxShadow: '0 4px 8px 0 rgba(0,0,0,0.2)',
-    transition: '0.3s',
-    marginBottom: '20px',
-  },
-  cardBody: {
-    padding: '16px',
-  },
-  button: {
-    margin: '5px',
-  },
-  searchInput: {
-    marginBottom: '20px',
-  },
-  feedbackButton: {
-    display: 'flex',
-    alignItems: 'center',
-    marginTop: '10px',
-  },
-  feedbackText: {
-    marginLeft: '10px',
-    color: 'green',
-  },
-};
+      alert("Feedback submitted successfully!");
+    } catch (error) {
+      console.error("Error submitting feedback:", error);
+      alert("Failed to submit feedback.");
+    }
+  };
 
+  return (
+    <Box p={20}>
+      <h1>Customer Dashboard</h1>
 
+      <CartDrawer
+        cart={cart}
+        opened={opened}
+        close={close}
+        removeFromCart={removeFromCart}
+        placeOrder={placeOrder}
+      />
 
-
-return (
-  <Container>
-    <h1>Customer Dashboard</h1>
-
-    {/* Search Input */}
-    <Form.Group controlId="productSearch" style={styles.searchInput}>
-      <Form.Control 
-        type="text" 
-        placeholder="Search Products" 
-        value={searchQuery} 
+      <TextInput
+        mb={20}
+        type="text"
+        placeholder="Search Products"
+        value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
       />
-    </Form.Group>
 
-    {/* Products Display */}
-    <Row xs={1} md={2} lg={3} className="g-4">
-      {products
-        .filter(product => 
-          product.name.toLowerCase().includes(searchQuery.toLowerCase().trim())
-        )
-        .map((product) => (
-          <Col key={product._id}>
-            <Card className="mb-3">
-              <Card.Body>
-                <Card.Title>{product.name}</Card.Title>
-                <Card.Text>Rating: {product.rating}</Card.Text>
-                <Card.Text>Price: ${product.price}</Card.Text>
-                <Card.Text>
-                  {product.inStock ? 'In Stock' : 'Out of Stock'}
-                </Card.Text>
-                <Button 
-                  variant="primary" 
-                  onClick={() => addToCart(product)}
-                  disabled={!product.inStock}
-                >
-                  Add to Cart
-                </Button>
-              </Card.Body>
-            </Card>
-          </Col>
-        ))}
-    </Row>
+      <Grid>
+        {products
+          .filter((product) =>
+            product.name
+              .toLowerCase()
+              .includes(searchQuery.toLowerCase().trim())
+          )
+          .map((product) => (
+            <Grid.Col key={product._id} span={2}>
+              <ProductCard product={product} addToCart={addToCart} />
+            </Grid.Col>
+          ))}
+      </Grid>
 
-    {/* Cart Section */}
-    {cart.length > 0 && (
-      <div>
-        {cart.map((item) => (
-          <Card key={item._id} style={styles.card}>
-            <CardBody style={styles.cardBody}>
-              <Card.Title>{item.name}</Card.Title>
-              <Button
-                variant="danger"
-                style={styles.button}
-                onClick={() => removeFromCart(item._id)}
-              >
-                Remove from Cart
-              </Button>
-            </CardBody>
-          </Card>
-        ))}
-        <Button
-          className="place-order-btn mt-3"
-          variant="success"
-          style={styles.button}
-          onClick={placeOrder}
-        >
-          Place Order
-        </Button>
-      </div>
-    )}
+      {orders.length > 0 && (
+        <div>
+          <h2>Your Orders</h2>
+          {orders.map((order) =>
+            order.products && order.products.length > 0 ? (
+              <Card key={order._id}>
+                <Card.Section>
+                  {order.products.map((product) => (
+                    <div key={product._id}>
+                      <h5>{product.name}</h5>
+                      <Form>
+                        {/* Supplier Rating */}
+                        <Form.Group>
+                          <Form.Label>Supplier Rating</Form.Label>
+                          <StarRatings
+                            rating={
+                              feedbacks[order._id]?.[product._id]
+                                ?.supplier_rating || 0
+                            }
+                            starRatedColor="blue"
+                            changeRating={(newRating) =>
+                              handleFeedbackChange(
+                                order._id,
+                                product._id,
+                                "supplier_rating",
+                                newRating
+                              )
+                            }
+                            numberOfStars={5}
+                            name="supplier_rating"
+                          />
+                        </Form.Group>
 
-    {/* Orders and Feedback Section */}
-    {orders.length > 0 && (
-      <div>
-        <h2>Your Orders</h2>
-        {orders.map((order) => (
-          order.products && order.products.length > 0 ? (
-            <Card key={order._id} style={styles.card}>
-              <CardBody style={styles.cardBody}>
-                {order.products.map((product) => (
-                  <div key={product._id}>
-                    <h5>{product.name}</h5>
-                    <Form>
-                      {/* Supplier Rating */}
-                      <Form.Group>
-                        <Form.Label>Supplier Rating</Form.Label>
-                        <StarRatings
-                          rating={feedbacks[order._id]?.[product._id]?.supplier_rating || 0}
-                          starRatedColor="blue"
-                          changeRating={(newRating) => handleFeedbackChange(order._id, product._id, 'supplier_rating', newRating)}
-                          numberOfStars={5}
-                          name='supplier_rating'
-                        />
-                      </Form.Group>
+                        {/* Service Rating */}
+                        <Form.Group>
+                          <Form.Label>Service Rating</Form.Label>
+                          <StarRatings
+                            rating={
+                              feedbacks[order._id]?.[product._id]
+                                ?.service_rating || 0
+                            }
+                            starRatedColor="blue"
+                            changeRating={(newRating) =>
+                              handleFeedbackChange(
+                                order._id,
+                                product._id,
+                                "service_rating",
+                                newRating
+                              )
+                            }
+                            numberOfStars={5}
+                            name="service_rating"
+                          />
+                        </Form.Group>
 
-                      {/* Service Rating */}
-                      <Form.Group>
-                        <Form.Label>Service Rating</Form.Label>
-                        <StarRatings
-                          rating={feedbacks[order._id]?.[product._id]?.service_rating || 0}
-                          starRatedColor="blue"
-                          changeRating={(newRating) => handleFeedbackChange(order._id, product._id, 'service_rating', newRating)}
-                          numberOfStars={5}
-                          name='service_rating'
-                        />
-                      </Form.Group>
-
-                      <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <Button 
-                          variant="primary" 
-                          onClick={() => submitFeedback(order._id, product._id)}
-                          disabled={feedbacks[order._id]?.[product._id]?.submitted}
-                        >
-                          Submit Feedback
-                        </Button>
-                        {feedbacks[order._id]?.[product._id]?.submitted && (
-                          <span style={{ marginLeft: '10px', color: 'green' }}>
-                            Feedback Submitted
-                          </span>
-                        )}
-                      </div>
-                    </Form>
-                  </div>
-                ))}
-              </CardBody>
-            </Card>
-          ) : null
-        ))}
-      </div>
-    )}
-  </Container>
-);
+                        <div style={{ display: "flex", alignItems: "center" }}>
+                          <Button
+                            variant="primary"
+                            onClick={() =>
+                              submitFeedback(order._id, product._id)
+                            }
+                            disabled={
+                              feedbacks[order._id]?.[product._id]?.submitted
+                            }
+                          >
+                            Submit Feedback
+                          </Button>
+                          {feedbacks[order._id]?.[product._id]?.submitted && (
+                            <span
+                              style={{ marginLeft: "10px", color: "green" }}
+                            >
+                              Feedback Submitted
+                            </span>
+                          )}
+                        </div>
+                      </Form>
+                    </div>
+                  ))}
+                </Card.Section>
+              </Card>
+            ) : null
+          )}
+        </div>
+      )}
+    </Box>
+  );
 };
 
 export default CustomerDashboard;

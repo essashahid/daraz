@@ -65,7 +65,7 @@ userRouter.post("/login", async (req, res) => {
       { userId: user._id, email: user.email },
       config.jwtSecret,
       {
-        expiresIn: "1h",
+        expiresIn: "6h",
       }
     );
     const match = bcrypt.compare(req.body.password, user.password);

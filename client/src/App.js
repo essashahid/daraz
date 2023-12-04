@@ -1,5 +1,5 @@
 import "./App.css";
-import "bootstrap/dist/css/bootstrap.min.css";
+import "@mantine/core/styles.css";
 
 import {
   BrowserRouter as Router,

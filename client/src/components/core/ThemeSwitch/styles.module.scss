@@ -1,0 +1,26 @@
+@import "../../../_mantine.scss";
+
+.icon {
+  width: rem(22px);
+  height: rem(22px);
+}
+
+.dark {
+  @include dark {
+    display: none;
+  }
+
+  @include light {
+    display: block;
+  }
+}
+
+.light {
+  @include light {
+    display: none;
+  }
+
+  @include dark {
+    display: block;
+  }
+}
