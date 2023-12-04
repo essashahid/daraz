@@ -11,6 +11,13 @@ export default function middleware(req, res, next) {
     next();
   } catch (err) {
     console.log(err);
-    res.status(401).json({ status: "error", message: "Unauthorized" });
+    if (err instanceof jwt.TokenExpiredError) {
+      // Handle the specific case of an expired token
+      res.status(401).json({ status: "error", message: "Your session has expired, please log in again." });
+    } else {
+      // Handle other kinds of errors
+      res.status(401).json({ status: "error", message: "Unauthorized" });
+    }
   }
 }
+

@@ -3,6 +3,7 @@ import cors from "cors";
 import express from "express";
 import mongoose from "mongoose";
 import config from "./config/index.js";
+import feedbackRouter from "./routes/feedbackRouter.js";
 import orderRouter from "./routes/orderRouter.js";
 
 import productRouter from "./routes/productRouter.js";
@@ -33,3 +34,6 @@ app.use("/", router);
 router.use("/user", userRouter);
 router.use("/product", productRouter);
 router.use("/order", orderRouter);
+router.use("/feedback", feedbackRouter);
+
+

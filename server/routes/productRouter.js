@@ -19,6 +19,8 @@ productRouter.get("/create-random", async (req, res) => {
       rating: Math.floor(Math.random() * 5),
       price: Math.floor(Math.random() * 1000),
       supplierId: randomSupplier._id,
+      inStock: true,
+
     });
 
     const savedProduct = await product.save();
@@ -29,22 +31,107 @@ productRouter.get("/create-random", async (req, res) => {
   }
 });
 
-// // Endpoint to add a new product
-// productRouter.post("/add-product", async (req, res) => {
-//   try {
-//     const newProduct = new ProductModel({
-//       name: req.body.name,
-//       rating: req.body.rating,
-//       price: req.body.price,
-//     });
+productRouter.post("/create-custom", async (req, res) => {
+  // Assuming the supplier's ID is passed in the request body
+  // (or you can extract it from a JWT token if you're using authentication)
+  const { supplierId, name, price, rating, customAttributes } = req.body;
 
-//     const savedProduct = await newProduct.save();
-//     res.status(201).json({ status: "success", data: savedProduct });
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ status: "error", message: "Error adding product" });
-//   }
-// });
+  // Validate the supplier's existence
+  const supplierExists = await UserModel.exists({ _id: supplierId, role: "supplier" });
+  if (!supplierExists) {
+    return res.status(404).json({ status: "error", message: "Supplier not found" });
+  }
+
+  try {
+    // Create a new product with the provided details
+    const product = new ProductModel({
+      name: name || `Custom Product ${Math.floor(Math.random() * 100)}`,
+      rating: rating || Math.floor(Math.random() * 5),
+      price: price || Math.floor(Math.random() * 1000),
+      supplierId: supplierId,
+      inStock: true,
+    });
+
+    const savedProduct = await product.save();
+    res.status(201).json({ status: "success", data: savedProduct });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: "error", message: "Error creating custom product" });
+  }
+});
+
+productRouter.post("/create", async (req, res) => {
+  // Extract supplierId from the request body or authentication token
+  const supplierId = req.body.supplierId; // or from req.user.id if using JWT
+
+  // Check if the supplier exists
+  const supplierExists = await UserModel.exists({ _id: supplierId, role: "supplier" });
+  if (!supplierExists) {
+    return res.status(404).json({ status: "error", message: "Supplier not found" });
+  }
+
+  try {
+    const product = new ProductModel({
+      name: "Product " + Math.floor(Math.random() * 100),
+      rating: Math.floor(Math.random() * 5),
+      price: Math.floor(Math.random() * 1000),
+      supplierId: supplierId, // Use the provided supplier ID
+      inStock: true,
+    });
+
+    const savedProduct = await product.save();
+    res.status(201).json({ status: "success", data: savedProduct });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: "error", message: "Error adding product" });
+  }
+});
+
+productRouter.get("/list", middleware, async (req, res) => {
+  try {
+    const products = await ProductModel.find({});
+    res.status(200).json({ status: "success", data: products });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: "error", message: "Error during search" });
+  }
+});
+
+// get products by the supplier id
+productRouter.get(
+  "/supplier-products/:supplierId",
+  middleware,
+  async (req, res) => {
+    try {
+      const products = await ProductModel.find({
+        supplierId: req.params.supplierId
+      });
+      res.status(200).json({ status: "success", data: products });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ status: "error", message: "Error retrieving products" });
+    }
+  }
+);
+
+
+// // Endpoint to add a new product
+productRouter.post("/add-product", async (req, res) => {
+  try {
+    const newProduct = new ProductModel({
+      name: req.body.name,
+      rating: req.body.rating,
+      price: req.body.price,
+      supplierId: req.body.supplierId,
+    });
+
+    const savedProduct = await newProduct.save();
+    res.status(201).json({ status: "success", data: savedProduct });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: "error", message: "Error adding product" });
+  }
+});
 
 // // Endpoint to update a product
 // productRouter.put("/update-product/:productId", async (req, res) => {
@@ -112,14 +199,6 @@ productRouter.get("/create-random", async (req, res) => {
 //   }
 // });
 
-productRouter.get("/list", middleware, async (req, res) => {
-  try {
-    const products = await ProductModel.find({});
-    res.status(200).json({ status: "success", data: products });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ status: "error", message: "Error during search" });
-  }
-});
+
 
 export default productRouter;

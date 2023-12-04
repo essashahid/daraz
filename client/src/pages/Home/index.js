@@ -45,7 +45,7 @@ const Home = () => {
             if (role === "manager") navigate("/manager-dashboard");
             if (role === "supplier") navigate("/supplier-dashboard");
 
-            navigate("/customer-dashboard");
+            // navigate("/customer-dashboard");
           }}
         >
           {getLabel()}

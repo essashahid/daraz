@@ -3,10 +3,23 @@ import FeedbackModel from "../models/feedback.js";
 
 const feedbackRouter = express.Router();
 
-feedbackRouter.post("/submit", (req, res) => 
-{
+feedbackRouter.get("/check", async (req, res) => {
+  const { oid, pid } = req.query;
+  try {
+    const feedbackExists = await FeedbackModel.findOne({ oid, pid });
+    res.status(200).json({ exists: !!feedbackExists });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: "error", message: "Error checking feedback" });
+  }
+});
+
+
+
+feedbackRouter.post("/submit", (req, res) => {
   const newFeedback = new FeedbackModel({
     oid: req.body.oid,
+    pid: req.body.pid, // Include product ID in feedback
     supplier_rating: req.body.supplier_rating,
     service_rating: req.body.service_rating,
   });
@@ -47,5 +60,6 @@ feedbackRouter.get("/:feedbackId", (req, res) =>
       res.status(500).json({ status: "error", message: "Error retrieving feedback" });
     });
 });
+
 
 export default feedbackRouter;

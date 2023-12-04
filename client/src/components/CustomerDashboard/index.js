@@ -18,6 +18,10 @@ const CustomerDashboard = () => {
   const savedFeedbacks = localStorage.getItem('feedbacks');
   return savedFeedbacks ? JSON.parse(savedFeedbacks) : {};
   });
+
+
+
+
   const token = localStorage.getItem("token");
 
   const fetchProducts = useCallback(async () => {
@@ -212,29 +216,33 @@ return (
     </Form.Group>
 
     <Row xs={1} md={2} lg={3} className="g-4">
-      {products
-        .filter(product => 
-          product.name.toLowerCase().includes(searchQuery.toLowerCase().trim())
-        )
-        .sort((a, b) => 
-          a.name.toLowerCase() === searchQuery.toLowerCase().trim() ? -1 : 
-          b.name.toLowerCase() === searchQuery.toLowerCase().trim() ? 1 : 0
-        )
-        .map((product) => (
-          <Col key={product._id}>
-            <Card className="mb-3">
-              <Card.Body>
-                <Card.Title>{product.name}</Card.Title>
-                <Card.Text>Rating: {product.rating}</Card.Text>
-                <Card.Text>Price: ${product.price}</Card.Text>
-                <Button variant="primary" onClick={() => addToCart(product)}>
-                  Add to Cart
-                </Button>
-              </Card.Body>
-            </Card>
-          </Col>
-        ))}
-    </Row>
+  {products
+    .filter(product => 
+      product.name.toLowerCase().includes(searchQuery.toLowerCase().trim())
+    )
+    .map((product) => (
+      <Col key={product._id}>
+        <Card className="mb-3">
+          <Card.Body>
+            <Card.Title>{product.name}</Card.Title>
+            <Card.Text>Rating: {product.rating}</Card.Text>
+            <Card.Text>Price: ${product.price}</Card.Text>
+            {/* Display stock status */}
+            <Card.Text>
+              {product.inStock ? 'In Stock' : 'Out of Stock'}
+            </Card.Text>
+            <Button 
+              variant="primary" 
+              onClick={() => addToCart(product)}
+              disabled={!product.inStock} // Disable if out of stock
+            >
+              Add to Cart
+            </Button>
+          </Card.Body>
+        </Card>
+      </Col>
+    ))}
+</Row>
     {cart.length > 0 && (
         <div>
           {cart.map((item) => (

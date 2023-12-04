@@ -6,6 +6,7 @@ const productSchema = new mongoose.Schema({
   rating: { type: Number, required: true },
   price: { type: Number, required: true },
   supplierId: { type: mongoose.Schema.Types.ObjectId, ref: UserModel },
+  inStock: { type: Number, required: true, default: 0 },
 });
 
 const ProductModel = mongoose.model("Product", productSchema);

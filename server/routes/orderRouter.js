@@ -116,4 +116,38 @@ orderRouter.get(
   }
 );
 
+// orderRouter.get(
+//   "/supplier-orders/:supplierID",
+//   middleware,
+//   async (req, res) => {
+//     try {
+//       // print
+//       const orders = await OrderModel.find({
+//         customerID: req.params.customerID,
+//       }).populate("products");
+//       res.status(200).json({ status: "success", data: orders });
+//     } catch (err) {
+//       console.error(err);
+//       res
+//         .status(500)
+//         .json({ status: "error", message: "Error retrieving orders" });
+//     }
+//   }
+// );
+
+orderRouter.get('/supplier-orders/:supplierID', middleware, async (req, res) => {
+  try {
+    const supplierID = req.params.supplierID;
+    // console.log
+    console.log(supplierID);
+
+    // Assuming your Order model has a reference to the supplier
+    const orders = await OrderModel.find({ supplierId: supplierID }).populate('products');
+    res.status(200).json({ status: 'success', data: orders });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: 'error', message: 'Error retrieving orders for supplier' });
+  }
+});
+
 export default orderRouter;
