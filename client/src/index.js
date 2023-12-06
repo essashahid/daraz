@@ -1,24 +1,21 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import "./index.css";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 import { ColorSchemeScript, MantineProvider, createTheme } from "@mantine/core";
 import { Helmet } from "react-helmet";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import "@mantine/core/styles.css";
 
-const theme = createTheme({
-  primaryColor: "blue",
-});
+const theme = createTheme({});
 
 const resolver = (theme) => ({
   variables: {},
-  light: {
-    "--mantine-color-deep-orange": theme.other.deepOrangeLight,
-  },
-  dark: {
-    // "--mantine-color-body": "#00000",
-  },
+  light: {},
+  dark: {},
 });
+
+const queryClient = new QueryClient();
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
@@ -26,9 +23,11 @@ root.render(
     <Helmet>
       <ColorSchemeScript />
     </Helmet>
-    <MantineProvider theme={theme} cssVariablesResolver={resolver}>
-      <App />
-    </MantineProvider>
+    <QueryClientProvider client={queryClient}>
+      <MantineProvider theme={theme} cssVariablesResolver={resolver}>
+        <App />
+      </MantineProvider>
+    </QueryClientProvider>
   </>
 );
 

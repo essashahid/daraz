@@ -3,10 +3,9 @@ import UserModel from "./user.js";
 
 const productSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  rating: { type: Number, required: true },
   price: { type: Number, required: true },
   supplierId: { type: mongoose.Schema.Types.ObjectId, ref: UserModel },
-  inStock: { type: Number, required: true, default: 0 },
+  inStock: { type: Boolean, required: true, default: true },
 });
 
 const ProductModel = mongoose.model("Product", productSchema);

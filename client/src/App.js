@@ -1,6 +1,3 @@
-import "./App.css";
-import "@mantine/core/styles.css";
-
 import {
   BrowserRouter as Router,
   Routes,

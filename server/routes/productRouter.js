@@ -5,8 +5,24 @@ import middleware from "../middleware/index.js";
 
 const productRouter = express.Router();
 
-const adjectives = ["Amazing", "Brilliant", "Creative", "Dynamic", "Elegant", "Fancy", "Glorious"];
-const nouns = ["Gadget", "Tool", "Device", "Item", "Product", "Invention", "Mechanism"];
+const adjectives = [
+  "Amazing",
+  "Brilliant",
+  "Creative",
+  "Dynamic",
+  "Elegant",
+  "Fancy",
+  "Glorious",
+];
+const nouns = [
+  "Gadget",
+  "Tool",
+  "Device",
+  "Item",
+  "Product",
+  "Invention",
+  "Mechanism",
+];
 
 productRouter.get("/create-random", async (req, res) => {
   const randomSupplier = await UserModel.findOne({ role: "supplier" });
@@ -17,16 +33,15 @@ productRouter.get("/create-random", async (req, res) => {
   }
 
   try {
-    const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+    const randomAdjective =
+      adjectives[Math.floor(Math.random() * adjectives.length)];
     const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
     const randomName = `${randomAdjective} ${randomNoun}`;
 
     const product = new ProductModel({
       name: randomName,
-      rating: Math.floor(Math.random() * 5),
       price: Math.floor(Math.random() * 1000),
       supplierId: randomSupplier._id,
-      inStock: true,
     });
 
     const savedProduct = await product.save();
@@ -40,19 +55,23 @@ productRouter.get("/create-random", async (req, res) => {
 productRouter.post("/create-custom", async (req, res) => {
   // Assuming the supplier's ID is passed in the request body
   // (or you can extract it from a JWT token if you're using authentication)
-  const { supplierId, name, price, rating, customAttributes } = req.body;
+  const { supplierId, name, price } = req.body;
 
   // Validate the supplier's existence
-  const supplierExists = await UserModel.exists({ _id: supplierId, role: "supplier" });
+  const supplierExists = await UserModel.exists({
+    _id: supplierId,
+    role: "supplier",
+  });
   if (!supplierExists) {
-    return res.status(404).json({ status: "error", message: "Supplier not found" });
+    return res
+      .status(404)
+      .json({ status: "error", message: "Supplier not found" });
   }
 
   try {
     // Create a new product with the provided details
     const product = new ProductModel({
       name: name || `Custom Product ${Math.floor(Math.random() * 100)}`,
-      rating: rating || Math.floor(Math.random() * 5),
       price: price || Math.floor(Math.random() * 1000),
       supplierId: supplierId,
       inStock: true,
@@ -62,7 +81,9 @@ productRouter.post("/create-custom", async (req, res) => {
     res.status(201).json({ status: "success", data: savedProduct });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ status: "error", message: "Error creating custom product" });
+    res
+      .status(500)
+      .json({ status: "error", message: "Error creating custom product" });
   }
 });
 
@@ -75,7 +96,8 @@ productRouter.post("/create", async (req, res) => {
   }
 
   try {
-    const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+    const randomAdjective =
+      adjectives[Math.floor(Math.random() * adjectives.length)];
     const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
     const randomName = `${randomAdjective} ${randomNoun}`;
 
@@ -112,16 +134,17 @@ productRouter.get(
   async (req, res) => {
     try {
       const products = await ProductModel.find({
-        supplierId: req.params.supplierId
+        supplierId: req.params.supplierId,
       });
       res.status(200).json({ status: "success", data: products });
     } catch (err) {
       console.error(err);
-      res.status(500).json({ status: "error", message: "Error retrieving products" });
+      res
+        .status(500)
+        .json({ status: "error", message: "Error retrieving products" });
     }
   }
 );
-
 
 // // Endpoint to add a new product
 productRouter.post("/add-product", async (req, res) => {
@@ -213,10 +236,10 @@ productRouter.get("/all", async (req, res) => {
     res.status(200).json({ status: "success", data: { products } });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ status: "error", message: "Error retrieving products" });
+    res
+      .status(500)
+      .json({ status: "error", message: "Error retrieving products" });
   }
 });
-
-
 
 export default productRouter;
