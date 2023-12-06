@@ -2,6 +2,7 @@ import express from "express";
 import UserModel from "../models/user.js";
 import ProductModel from "../models/product.js";
 import middleware from "../middleware/index.js";
+import OrderModel from "../models/order.js";
 
 const productRouter = express.Router();
 
@@ -53,11 +54,8 @@ productRouter.get("/create-random", async (req, res) => {
 });
 
 productRouter.post("/create-custom", async (req, res) => {
-  // Assuming the supplier's ID is passed in the request body
-  // (or you can extract it from a JWT token if you're using authentication)
   const { supplierId, name, price } = req.body;
 
-  // Validate the supplier's existence
   const supplierExists = await UserModel.exists({
     _id: supplierId,
     role: "supplier",
@@ -69,7 +67,6 @@ productRouter.post("/create-custom", async (req, res) => {
   }
 
   try {
-    // Create a new product with the provided details
     const product = new ProductModel({
       name: name || `Custom Product ${Math.floor(Math.random() * 100)}`,
       price: price || Math.floor(Math.random() * 1000),
@@ -127,7 +124,6 @@ productRouter.get("/list", middleware, async (req, res) => {
   }
 });
 
-// get products by the supplier id
 productRouter.get(
   "/supplier-products/:supplierId",
   middleware,
@@ -146,7 +142,33 @@ productRouter.get(
   }
 );
 
-// // Endpoint to add a new product
+productRouter.get(
+  "/supplier-orders/:supplierId",
+  middleware,
+  async (req, res) => {
+    try {
+      const products = await ProductModel.find({
+        supplierId: req.params.supplierId,
+      }).select("_id");
+
+      const productIds = products.map((product) => product._id);
+
+      const orders = await OrderModel.find({
+        "products.product": { $in: productIds },
+      })
+        .populate("customerID")
+        .populate("products.product");
+
+      res.status(200).json({ status: "success", data: orders });
+    } catch (err) {
+      console.error(err);
+      res
+        .status(500)
+        .json({ status: "error", message: "Error retrieving supplier orders" });
+    }
+  }
+);
+
 productRouter.post("/add-product", async (req, res) => {
   try {
     const newProduct = new ProductModel({
@@ -163,72 +185,6 @@ productRouter.post("/add-product", async (req, res) => {
     res.status(500).json({ status: "error", message: "Error adding product" });
   }
 });
-
-// // Endpoint to update a product
-// productRouter.put("/update-product/:productId", async (req, res) => {
-//   try {
-//     const updatedProduct = await ProductModel.findByIdAndUpdate(
-//       req.params.productId,
-//       req.body,
-//       { new: true } // Returns the updated document
-//     );
-
-//     if (!updatedProduct) {
-//       return res
-//         .status(404)
-//         .json({ status: "error", message: "Product not found" });
-//     }
-
-//     res.status(200).json({ status: "success", data: updatedProduct });
-//   } catch (err) {
-//     console.error(err);
-//     res
-//       .status(500)
-//       .json({ status: "error", message: "Error updating product" });
-//   }
-// });
-
-// // Endpoint to get a product by ID
-// productRouter.get("/get-product/:productId", async (req, res) => {
-//   try {
-//     const product = await ProductModel.findById(req.params.productId);
-
-//     if (!product) {
-//       return res
-//         .status(404)
-//         .json({ status: "error", message: "Product not found" });
-//     }
-
-//     res.status(200).json({ status: "success", data: product });
-//   } catch (err) {
-//     console.error(err);
-//     res
-//       .status(500)
-//       .json({ status: "error", message: "Error retrieving product" });
-//   }
-// });
-
-// // Endpoint to delete a product
-// productRouter.delete("/delete-product/:productId", async (req, res) => {
-//   try {
-//     const result = await ProductModel.findByIdAndDelete(req.params.productId);
-
-//     if (!result) {
-//       return res
-//         .status(404)
-//         .json({ status: "error", message: "Product not found" });
-//     }
-
-//     res
-//       .status(200)
-//       .json({ status: "success", message: "Product deleted successfully" });
-//   } catch (err) {
-//     console.error(err);
-//     res
-//       .status(500)
-//       .json({ status: "error", message: "Error deleting product" });
-//   }
-// });
 
 productRouter.get("/all", async (req, res) => {
   try {

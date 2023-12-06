@@ -66,8 +66,8 @@ export const AppLayout = ({ children }) => {
     }
   };
 
-  const removeFromCart = (productId) => {
-    const updatedCart = cart.filter((item) => item.productID !== productId);
+  const removeFromCart = (productID) => {
+    const updatedCart = cart.filter((item) => item.productID !== productID);
     setCart(updatedCart);
   };
 
