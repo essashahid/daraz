@@ -6,6 +6,7 @@
     "@mantine/core": "^7.3.0",
     "@mantine/hooks": "^7.3.0",
     "@nextui-org/react": "^2.2.9",
+    "@tabler/icons-react": "^2.42.0",
     "@tanstack/react-table": "^8.10.7",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
@@ -28,6 +29,7 @@
     "react-star-ratings": "^2.3.0",
     "react-table": "^7.8.0",
     "sass": "^1.69.5",
+    "tabler-icons-react": "^1.56.0",
     "tailwindcss": "^3.3.5",
     "typescript": "^4.9.5"
   },

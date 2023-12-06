@@ -6,6 +6,8 @@ import { Form } from "react-bootstrap";
 import StarRatings from "react-star-ratings";
 import api from "../../api";
 
+
+
 import {
   Box,
   Button,
@@ -17,8 +19,24 @@ import {
   Text,
   TextInput,
   Title,
+  Table,
 } from "@mantine/core";
+
+import { Rating, rem } from '@mantine/core';
+import {
+  IconMoodCry,
+  IconMoodSad,
+  IconMoodSmile,
+  IconMoodHappy,
+  IconMoodCrazyHappy,
+} from '@tabler/icons-react';
+
+
+
+
 import { CartContext } from "../../contexts/cart";
+
+
 
 function CartDrawer({ cart, opened, close, removeFromCart, placeOrder }) {
   return (
@@ -80,6 +98,49 @@ function ProductCard({ product, addToCart }) {
   );
 }
 
+// Rating Component styles and icons
+const getIconStyle = (color) => ({
+  width: "24px",
+  height: "24px",
+  color: color ? `var(--mantine-color-${color}-7)` : undefined,
+});
+
+const getEmptyIcon = (value: number) => {
+  const iconStyle = getIconStyle();
+
+  switch (value) {
+    case 1:
+      return <IconMoodCry style={iconStyle} />;
+    case 2:
+      return <IconMoodSad style={iconStyle} />;
+    case 3:
+      return <IconMoodSmile style={iconStyle} />;
+    case 4:
+      return <IconMoodHappy style={iconStyle} />;
+    case 5:
+      return <IconMoodCrazyHappy style={iconStyle} />;
+    default:
+      return null;
+  }
+};
+
+const getFullIcon = (value: number) => {
+  switch (value) {
+    case 1:
+      return <IconMoodCry style={getIconStyle('red')} />;
+    case 2:
+      return <IconMoodSad style={getIconStyle('orange')} />;
+    case 3:
+      return <IconMoodSmile style={getIconStyle('yellow')} />;
+    case 4:
+      return <IconMoodHappy style={getIconStyle('lime')} />;
+    case 5:
+      return <IconMoodCrazyHappy style={getIconStyle('green')} />;
+    default:
+      return null;
+  }
+}
+
 const CustomerDashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [products, setProducts] = useState([]);
@@ -87,10 +148,20 @@ const CustomerDashboard = () => {
 
   const [orders, setOrders] = useState([]);
   const customerID = localStorage.getItem("userID");
+  const [customerName, setCustomerName] = useState(localStorage.getItem("userName") || '');
+  const [customerEmail, setCustomerEmail] = useState(localStorage.getItem("userEmail") || '');
   const [feedbacks, setFeedbacks] = useState(() => {
-    const savedFeedbacks = localStorage.getItem("feedbacks");
+  const savedFeedbacks = localStorage.getItem("feedbacks");
+    
+    // console.log
+    console.log("Saved feedback is: ");
+    console.log(savedFeedbacks);
     return savedFeedbacks ? JSON.parse(savedFeedbacks) : {};
+
+    
   });
+
+  
 
   const token = localStorage.getItem("token");
 
@@ -193,6 +264,20 @@ const CustomerDashboard = () => {
     });
   };
 
+  const handleRatingChange = (orderId, productId, field, value) => {
+    setFeedbacks(prevFeedbacks => ({
+      ...prevFeedbacks,
+      [orderId]: {
+        ...prevFeedbacks[orderId],
+        [productId]: {
+          ...prevFeedbacks[orderId]?.[productId],
+          [field]: value,
+          submitted: prevFeedbacks[orderId]?.[productId]?.submitted || false,
+        },
+      },
+    }));
+  };
+
   // Adjusted function to submit feedback for a product
   const submitFeedback = async (orderId, productId) => {
     const currentFeedback = feedbacks[orderId]?.[productId];
@@ -238,6 +323,7 @@ const CustomerDashboard = () => {
 
       // Save the updated feedbacks to localStorage
       localStorage.setItem("feedbacks", JSON.stringify(updatedFeedbacks));
+      console.log("SUBMITTED");
 
       alert("Feedback submitted successfully!");
     } catch (error) {
@@ -246,9 +332,53 @@ const CustomerDashboard = () => {
     }
   };
 
+  const updateCustomerDetails = async (event) => {
+    event.preventDefault();
+    try {
+      const response = await axios.put(
+        `${api}/user/update/${customerID}`,
+        { name: customerName, email: customerEmail },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.status === 200) {
+        // Update state and local storage
+        setCustomerName(response.data.data.name); // Assuming response contains updated name
+        setCustomerEmail(response.data.data.email); // Assuming response contains updated email
+        localStorage.setItem("userName", response.data.data.name);
+        localStorage.setItem("userEmail", response.data.data.email);
+        alert("Customer details updated successfully");
+      }
+    } catch (error) {
+      console.error("Error updating customer details:", error);
+      alert("Failed to update customer details.");
+    }
+  };
+
+  
+
   return (
     <Box p={20}>
       <h1>Customer Dashboard</h1>
+      {/* Customer Details Update Form */}
+      <form onSubmit={updateCustomerDetails}>
+        <TextInput
+          label="Name"
+          placeholder="Your Name"
+          value={customerName}
+          onChange={(e) => setCustomerName(e.target.value)}
+          required
+        />
+        <TextInput
+          label="Email"
+          placeholder="Your Email"
+          value={customerEmail}
+          onChange={(e) => setCustomerEmail(e.target.value)}
+          required
+        />
+        <Button type="submit">Update Details</Button>
+      </form>
+      
 
       <CartDrawer
         cart={cart}
@@ -279,7 +409,6 @@ const CustomerDashboard = () => {
             </Grid.Col>
           ))}
       </Grid>
-
       {orders.length > 0 && (
         <div>
           <h2>Your Orders</h2>
@@ -292,49 +421,29 @@ const CustomerDashboard = () => {
                       <h5>{product.name}</h5>
                       <Form>
                         {/* Supplier Rating */}
-                        <Form.Group>
-                          <Form.Label>Supplier Rating</Form.Label>
-                          <StarRatings
-                            rating={
-                              feedbacks[order._id]?.[product._id]
-                                ?.supplier_rating || 0
-                            }
-                            starRatedColor="blue"
-                            changeRating={(newRating) =>
-                              handleFeedbackChange(
-                                order._id,
-                                product._id,
-                                "supplier_rating",
-                                newRating
-                              )
-                            }
-                            numberOfStars={5}
-                            name="supplier_rating"
-                          />
-                        </Form.Group>
-
-                        {/* Service Rating */}
-                        <Form.Group>
-                          <Form.Label>Service Rating</Form.Label>
-                          <StarRatings
-                            rating={
-                              feedbacks[order._id]?.[product._id]
-                                ?.service_rating || 0
-                            }
-                            starRatedColor="blue"
-                            changeRating={(newRating) =>
-                              handleFeedbackChange(
-                                order._id,
-                                product._id,
-                                "service_rating",
-                                newRating
-                              )
-                            }
-                            numberOfStars={5}
-                            name="service_rating"
-                          />
-                        </Form.Group>
-
+                    <Form.Group>
+                      <Form.Label>Supplier Rating</Form.Label>
+                      <Rating
+                        value={feedbacks[order._id]?.[product._id]?.supplier_rating || 0}
+                        onChange={(value) => handleRatingChange(order._id, product._id, 'supplier_rating', value)}
+                        emptySymbol={getEmptyIcon}
+                        fullSymbol={getFullIcon}
+                        highlightSelectedOnly
+                        readOnly={feedbacks[order._id]?.[product._id]?.submitted || false}
+                      />
+                    </Form.Group>
+                      {/* Service Rating */}
+                      <Form.Group>
+                      <Form.Label>Service Rating</Form.Label>
+                      <Rating
+                        value={feedbacks[order._id]?.[product._id]?.service_rating || 0}
+                        onChange={(value) => handleRatingChange(order._id, product._id, 'service_rating', value)}
+                        emptySymbol={getEmptyIcon}
+                        fullSymbol={getFullIcon}
+                        highlightSelectedOnly
+                        readOnly={feedbacks[order._id]?.[product._id]?.submitted || false}
+                      />
+                    </Form.Group>
                         <div style={{ display: "flex", alignItems: "center" }}>
                           <Button
                             variant="primary"
@@ -356,10 +465,13 @@ const CustomerDashboard = () => {
                           )}
                         </div>
                       </Form>
+                      
                     </div>
+                    
                   ))}
                 </Card.Section>
               </Card>
+              
             ) : null
           )}
         </div>

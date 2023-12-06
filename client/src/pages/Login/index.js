@@ -1,14 +1,9 @@
-import "./styles.css";
-
-import axios from "axios";
-import React from "react";
-import Button from "react-bootstrap/Button";
-import Card from "react-bootstrap/Card";
-import Form from "react-bootstrap/Form";
-
-import { useForm } from "react-hook-form";
-import { Link, useNavigate, Navigate } from "react-router-dom";
-import api from "../../api";
+import React from 'react';
+import { useForm } from 'react-hook-form';
+import { Link, useNavigate, Navigate } from 'react-router-dom';
+import axios from 'axios';
+import { TextInput, PasswordInput, Paper, Title, Button, Text } from '@mantine/core';
+import api from '../../api';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -25,87 +20,66 @@ const Login = () => {
 
     try {
       const response = await axios.post(`${api}/user/login`, {
-        email: email,
-        password: password,
+        email,
+        password,
       });
 
-      console.log("Login Response:", response);
-      const data = await response.data;
+      const responseData = response.data;
 
-      localStorage.setItem("userID", data?.userID);
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("userName", data.userName);
-      localStorage.setItem("userEmail", data.userEmail);
-      localStorage.setItem("role", data.role);
+      // Storing user data in local storage
+      localStorage.setItem("userID", responseData?.userID);
+      localStorage.setItem("token", responseData.token);
+      localStorage.setItem("userName", responseData.userName);
+      localStorage.setItem("userEmail", responseData.userEmail);
+      localStorage.setItem("role", responseData.role);
 
-      navigate("/home");
+      navigate('/home');
     } catch (error) {
-      setLoginError("Invalid credentials");
-      console.error("Error during login:", error);
+      setLoginError('Invalid credentials');
+      console.error('Error during login:', error);
     }
   }
 
-  const token = localStorage.getItem("token");
-
+  const token = localStorage.getItem('token');
   if (token) {
     return <Navigate to="/home" />;
   }
 
   return (
-    <div
-      className="d-flex justify-content-center align-items-center"
-      style={{ height: "100vh" }}
-    >
-      <Card style={{ width: "400px" }}>
-        <Card.Body>
-          <Card.Title className="text-center">Login</Card.Title>
-          <Form onSubmit={handleSubmit(onLogin)}>
-            <Form.Group className="mb-3" controlId="formBasicEmail">
-              <Form.Label>Email address</Form.Label>
-              <Form.Control
-                {...register("email", {
-                  required: "Email is required",
-                })}
-                type="email"
-                placeholder="Enter email"
-              />
-              {errors.email && (
-                <Form.Text className="text-danger">
-                  {errors.email.message}
-                </Form.Text>
-              )}
-            </Form.Group>
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      <Paper style={{ width: 400, padding: '20px' }}>
+        <Title order={2} align="center">Login</Title>
+        <form onSubmit={handleSubmit(onLogin)}>
+          <TextInput
+            label="Email address"
+            placeholder="Enter email"
+            {...register('email', {
+              required: 'Email is required',
+            })}
+            error={errors.email?.message}
+          />
 
-            <Form.Group className="mb-3" controlId="formBasicPassword">
-              <Form.Label>Password</Form.Label>
-              <Form.Control
-                {...register("password", {
-                  required: "Password is required",
-                  minLength: 8,
-                })}
-                type="password"
-                placeholder="Password"
-              />
-              {errors.password && (
-                <Form.Text className="text-danger">
-                  {errors.password.message}
-                </Form.Text>
-              )}
-            </Form.Group>
+          <PasswordInput
+            label="Password"
+            placeholder="Password"
+            {...register('password', {
+              required: 'Password is required',
+              minLength: 8,
+            })}
+            error={errors.password?.message}
+            mt="md"
+          />
 
-            <Button className="w-100" variant="primary" type="submit">
-              Login
-            </Button>
+          <Button fullWidth mt="xl" type="submit">
+            Login
+          </Button>
 
-            {loginError && (
-              <Form.Text className="text-danger mt-3">{loginError}</Form.Text>
-            )}
-          </Form>
-        </Card.Body>
-        <Card.Footer className="text-center">
+          {loginError && <Text color="red" mt="sm">{loginError}</Text>}
+        </form>
+        <Text align="center" mt="md">
           Don't have an account? <Link to="/signup">Signup</Link>
-        </Card.Footer>{" "}
-      </Card>
+        </Text>
+      </Paper>
     </div>
   );
 };

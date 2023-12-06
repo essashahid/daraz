@@ -4,22 +4,26 @@ import jwt from "jsonwebtoken";
 import config from "../config/index.js";
 import UserModel from "../models/user.js";
 
+import FeedbackModel from "../models/feedback.js";
+import ProductModel from '../models/product.js';
+import middleware from "../middleware/index.js";
+
 const userRouter = express.Router();
 const saltRounds = 10;
 
-userRouter.get("/list", async (req, res) => {
-  await UserModel.deleteMany({});
-  return res
-    .status(200)
-    .json({ status: "success", message: "Deleted all users" });
-  try {
-    const users = await UserModel.find({});
-    res.status(200).json({ status: "success", data: users });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ status: "error", message: "Error during search" });
-  }
-});
+// userRouter.get("/list", async (req, res) => {
+//   await UserModel.deleteMany({});
+//   return res
+//     .status(200)
+//     .json({ status: "success", message: "Deleted all users" });
+//   try {
+//     const users = await UserModel.find({});
+//     res.status(200).json({ status: "success", data: users });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ status: "error", message: "Error during search" });
+//   }
+// });
 
 userRouter.delete(":email", async (req, res) => {
   try {
@@ -52,7 +56,7 @@ userRouter.patch("", async (req, res) => {
 userRouter.post("/login", async (req, res) => {
   try {
     const user = await UserModel.findOne({ email: req.body.email });
-    console.log("User found:", user);
+    // console.log("User found:", user);
 
     if (!user) {
       console.log("No user found with that email", req.body.email);
@@ -122,5 +126,62 @@ userRouter.post("/signup", async (req, res) => {
     res.status(400).json({ status: "error", message: err.message });
   }
 });
+
+userRouter.put('/update/:userId', async (req, res) => {
+  const { userId } = req.params;
+  const { name, email } = req.body;
+
+
+  try {
+    const updatedUser = await UserModel.findOneAndUpdate(
+      { _id: userId },
+      { $set: { name, email } },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ status: 'error', message: 'Supplier not found' });
+    }
+
+    res.json({ status: 'success', data: updatedUser });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: 'error', message: 'Error updating supplier details' });
+  }
+});
+
+userRouter.get('/supplier-feedback/:supplierId', async (req, res) => {
+  const { supplierId } = req.params;
+  try {
+    // Fetch products supplied by this supplier
+    const products = await ProductModel.find({ supplierId });
+
+    // Extract product IDs
+    const productIds = products.map(product => product._id);
+
+    // Fetch feedbacks for these products
+    const feedbacks = await FeedbackModel.find({ pid: { $in: productIds } }).populate('pid', 'name');
+
+    res.json({ status: 'success', data: feedbacks });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ status: 'error', message: 'Error fetching feedback' });
+  }
+});
+
+userRouter.get('/customers', middleware,async (req, res) => {
+  try {
+    // Fetch all customer
+    const customers = await UserModel.find({ role: 'customer' });
+    // use console.log to display customer
+    console.log("CUSTOMERS ARE: ");
+    console.log(customers);
+    res.status(200).json({ status: "success", data: customers });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: "error", message: "Error fetching customers" });
+  }
+});
+  
 
 export default userRouter;

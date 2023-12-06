@@ -5,6 +5,9 @@ import middleware from "../middleware/index.js";
 
 const productRouter = express.Router();
 
+const adjectives = ["Amazing", "Brilliant", "Creative", "Dynamic", "Elegant", "Fancy", "Glorious"];
+const nouns = ["Gadget", "Tool", "Device", "Item", "Product", "Invention", "Mechanism"];
+
 productRouter.get("/create-random", async (req, res) => {
   const randomSupplier = await UserModel.findOne({ role: "supplier" });
   if (!randomSupplier) {
@@ -14,13 +17,16 @@ productRouter.get("/create-random", async (req, res) => {
   }
 
   try {
+    const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+    const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
+    const randomName = `${randomAdjective} ${randomNoun}`;
+
     const product = new ProductModel({
-      name: "Product " + Math.floor(Math.random() * 100),
+      name: randomName,
       rating: Math.floor(Math.random() * 5),
       price: Math.floor(Math.random() * 1000),
       supplierId: randomSupplier._id,
       inStock: true,
-
     });
 
     const savedProduct = await product.save();
@@ -61,21 +67,23 @@ productRouter.post("/create-custom", async (req, res) => {
 });
 
 productRouter.post("/create", async (req, res) => {
-  // Extract supplierId from the request body or authentication token
-  const supplierId = req.body.supplierId; // or from req.user.id if using JWT
-
-  // Check if the supplier exists
-  const supplierExists = await UserModel.exists({ _id: supplierId, role: "supplier" });
-  if (!supplierExists) {
-    return res.status(404).json({ status: "error", message: "Supplier not found" });
+  const randomSupplier = await UserModel.findOne({ role: "supplier" });
+  if (!randomSupplier) {
+    return res
+      .status(404)
+      .json({ status: "error", message: "Supplier not found" });
   }
 
   try {
+    const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+    const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
+    const randomName = `${randomAdjective} ${randomNoun}`;
+
     const product = new ProductModel({
-      name: "Product " + Math.floor(Math.random() * 100),
+      name: randomName,
       rating: Math.floor(Math.random() * 5),
       price: Math.floor(Math.random() * 1000),
-      supplierId: supplierId, // Use the provided supplier ID
+      supplierId: randomSupplier._id,
       inStock: true,
     });
 
@@ -198,6 +206,16 @@ productRouter.post("/add-product", async (req, res) => {
 //       .json({ status: "error", message: "Error deleting product" });
 //   }
 // });
+
+productRouter.get("/all", async (req, res) => {
+  try {
+    const products = await ProductModel.find({});
+    res.status(200).json({ status: "success", data: { products } });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: "error", message: "Error retrieving products" });
+  }
+});
 
 
 

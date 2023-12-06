@@ -139,7 +139,7 @@ orderRouter.get('/supplier-orders/:supplierID', middleware, async (req, res) => 
   try {
     const supplierID = req.params.supplierID;
     // console.log
-    console.log(supplierID);
+    // console.log(supplierID);
 
     // Assuming your Order model has a reference to the supplier
     const orders = await OrderModel.find({ supplierId: supplierID }).populate('products');
@@ -147,6 +147,16 @@ orderRouter.get('/supplier-orders/:supplierID', middleware, async (req, res) => 
   } catch (err) {
     console.error(err);
     res.status(500).json({ status: 'error', message: 'Error retrieving orders for supplier' });
+  }
+});
+
+orderRouter.get("/all", async (req, res) => {
+  try {
+    const orders = await OrderModel.find({}).populate("products"); // Assuming you want to populate product details in the orders
+    res.status(200).json({ status: "success", data: { orders } });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: "error", message: "Error retrieving orders" });
   }
 });
 

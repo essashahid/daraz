@@ -1,8 +1,7 @@
-import "./styles.css";
-
 import React from "react";
-import { Button, Container } from "react-bootstrap";
+import { Button, Container, Text, Group, Title } from '@mantine/core';
 import { useNavigate } from "react-router-dom";
+import "./styles.css";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -29,30 +28,30 @@ const Home = () => {
       return "Dashboard";
     }
   }
+
   return (
-    <Container className="d-flex flex-column justify-content-center align-items-center vh-100">
-      <div>
-        <h1>Welcome to the Management System</h1>
-        <p>{`Logged in as ${userName} (${userEmail})`}</p>
-      </div>
+    <Container size="xs" className="home-container">
+      <Title order={1}>Welcome to Daraz Management System</Title>
+      {/* display Logo here */}
+      {/* path of image in folder*/}
 
-      <p>This is the home page, accessible only to logged-in users.</p>
+      <Text size="lg">{`Logged in as ${userName} (${userEmail})`}</Text>
 
-      <div className="d-flex gap-2">
+      <Text size="md">This is the home page, accessible only to logged-in users.</Text>
+
+      <Group position="center" mt="md">
         <Button
           onClick={() => {
             if (role === "customer") navigate("/customer-dashboard");
             if (role === "manager") navigate("/manager-dashboard");
             if (role === "supplier") navigate("/supplier-dashboard");
-
-            // navigate("/customer-dashboard");
           }}
         >
           {getLabel()}
         </Button>
 
         <Button onClick={handleLogout}>Logout</Button>
-      </div>
+      </Group>
     </Container>
   );
 };

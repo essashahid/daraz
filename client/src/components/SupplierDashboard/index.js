@@ -1,66 +1,42 @@
-import React, { useState, useEffect, useCallback} from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { Container, Row, Col, Table, Button, Form} from 'react-bootstrap';
+import { Container, Grid, Table, Button, TextInput, NumberInput, Tooltip, Card, Text } from '@mantine/core';
 import api from '../../api';
-// import Form
-
 
 const SupplierDashboard = () => {
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [feedbacks, setFeedbacks] = useState([]);
   const supplierId = localStorage.getItem("userID");
   const token = localStorage.getItem("token");
+
   const [customProductName, setCustomProductName] = useState('');
   const [customProductPrice, setCustomProductPrice] = useState('');
   const [customProductRating, setCustomProductRating] = useState('');
   const [customProductInStock, setCustomProductInStock] = useState('');
 
-
-
-
-  // console.log("Supplier ID:", supplierId); // Log Supplier ID
-  // console.log("Token:", token); // Log Supplier ID
-
-  
-
-  useEffect(() => {
-    fetchProducts();
-    fetchOrders();
-  }, []); // Dependencies array is empty, so this runs once after initial render
+  const [supplierName, setSupplierName] = useState('');
+  const [supplierEmail, setSupplierEmail] = useState('');
 
   const fetchProducts = useCallback(async () => {
-    if (supplierId) 
-    {
-      console.log("Fetching products for supplier:", supplierId);
+    if (supplierId) {
       try {
-        const response = await axios.get(
-          `${api}/product/supplier-products/${supplierId}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-
-        const products = response.data.data;
-
-        setProducts(products);
+        const response = await axios.get(`${api}/product/supplier-products/${supplierId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setProducts(response.data.data);
       } catch (error) {
         console.error("Error fetching suppliers products by id:", error);
-        // setProducts([]);
       }
     }
   }, [supplierId, token]);
 
   const fetchOrders = useCallback(async () => {
     if (supplierId) {
-      console.log("Fetching orders for supplier:", supplierId);
       try {
-        const response = await axios.get(
-          `${api}/order/supplier-orders/${supplierId}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        console.log("Orders response:", response.data.data); // Log the response data
+        const response = await axios.get(`${api}/order/supplier-orders/${supplierId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         setOrders(response.data.data);
       } catch (error) {
         console.error("Error fetching orders by suppliers id:", error);
@@ -69,6 +45,26 @@ const SupplierDashboard = () => {
     }
   }, [supplierId, token]);
 
+  const fetchFeedbacks = useCallback(async () => {
+    if (supplierId) {
+      try {
+        // Update the endpoint to use the new API
+        const response = await axios.get(`${api}/supplier-feedback/${supplierId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setFeedbacks(response.data.data);
+      } catch (error) {
+        console.error("Error fetching feedbacks:", error);
+        setFeedbacks([]);
+      }
+    }
+  }, [supplierId, token]);
+
+  useEffect(() => {
+    fetchProducts();
+    fetchOrders();
+    fetchFeedbacks();
+  }, [fetchProducts, fetchOrders, fetchFeedbacks]);
   const createRandomProduct = async () => {
     try {
       const response = await axios.post(`${api}/product/create`, 
@@ -118,57 +114,79 @@ const SupplierDashboard = () => {
     }
   };
 
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(price);
+  };
+
+  const truncateId = (id) => {
+    return id.length > 10 ? `${id.substring(0, 7)}...` : id;
+  };
+
+  const updateSupplierDetails = async (event) => {
+    event.preventDefault();
+    try {
+      const response = await axios.put(
+        `${api}/user/update/${supplierId}`,
+        { name: supplierName, email: supplierEmail },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.status === 200) {
+        alert("Supplier details updated successfully");
+        // update local storage
+        localStorage.setItem("userName", supplierName);
+        localStorage.setItem("userEmail", supplierEmail);
+
+      }
+    } catch (error) {
+      console.error("Error updating supplier details:", error);
+      alert("Failed to update supplier details.");
+    }
+  };
+
 
   return (
-    <Container>
+    <Container size="lg" mt="md">
       <h1>Supplier Dashboard</h1>
-      <Row>
-        <Col>
+      <Grid>
+        {/* Section for Product Management */}
+        <Grid.Col span={6}>
           <h2>Your Products</h2>
           <Button onClick={createRandomProduct} className="mb-3">
             Create Random Product
           </Button>
-          <Form onSubmit={createCustomProduct} className="mb-3">
-            <Form.Group>
-              <Form.Label>Name</Form.Label>
-              <Form.Control
-                type="text"
-                value={customProductName}
-                onChange={(e) => setCustomProductName(e.target.value)}
-                placeholder="Enter product name"
-              />
-            </Form.Group>
-            <Form.Group>
-              <Form.Label>Price</Form.Label>
-              <Form.Control
-                type="number"
-                value={customProductPrice}
-                onChange={(e) => setCustomProductPrice(e.target.value)}
-                placeholder="Enter price"
-              />
-            </Form.Group>
-            <Form.Group>
-              <Form.Label>Rating</Form.Label>
-              <Form.Control
-                type="number"
-                value={customProductRating}
-                onChange={(e) => setCustomProductRating(e.target.value)}
-                placeholder="Enter rating"
-              />
-            </Form.Group>
-            <Form.Group>
-            <Form.Label>In Stock</Form.Label>
-            <Form.Control
-              type="number" // Change type to number
-              min="0" // Optional: Ensure no negative values
-              value={customProductInStock}
-              onChange={(e) => setCustomProductInStock(e.target.value)}
-              placeholder="Enter stock availability"
+          <form onSubmit={createCustomProduct} style={{ marginBottom: '1rem' }}>
+            <TextInput
+              label="Name"
+              value={customProductName}
+              onChange={(e) => setCustomProductName(e.target.value)}
+              placeholder="Enter product name"
+              mb="md"
             />
-          </Form.Group>
+            <NumberInput
+              label="Price"
+              value={customProductPrice}
+              onChange={(value) => setCustomProductPrice(value)}
+              placeholder="Enter price"
+              mb="md"
+            />
+            <NumberInput
+              label="Rating"
+              value={customProductRating}
+              onChange={(value) => setCustomProductRating(value)}
+              placeholder="Enter rating"
+              mb="md"
+            />
+            <NumberInput
+              label="In Stock"
+              value={customProductInStock}
+              onChange={(value) => setCustomProductInStock(value)}
+              placeholder="Enter stock availability"
+              mb="md"
+            />
             <Button type="submit">Create Custom Product</Button>
-          </Form>
-          <Table striped bordered hover>
+          </form>
+          <Table striped highlightOnHover>
             <thead>
               <tr>
                 <th>Product ID</th>
@@ -179,17 +197,36 @@ const SupplierDashboard = () => {
             <tbody>
               {products.map(product => (
                 <tr key={product._id}>
-                  <td>{product._id}</td>
+                  <td>
+                    <Tooltip label={product._id} position="bottom">
+                      <Button variant="subtle" compact>
+                        {truncateId(product._id)}
+                      </Button>
+                    </Tooltip>
+                  </td>
                   <td>{product.name}</td>
-                  <td>${product.price}</td>
+                  <td>{formatPrice(product.price)}</td>
                 </tr>
               ))}
             </tbody>
           </Table>
-        </Col>
-        <Col>
+        </Grid.Col>
+
+        <Grid.Col span={12}>
+      <h2>Feedback on Your Products</h2>
+      {feedbacks.map(feedback => (
+        <Card key={feedback._id}>
+          <Text>Product: {feedback.pid.name}</Text>
+          <Text>Supplier Rating: {feedback.supplier_rating}</Text>
+          <Text>Service Rating: {feedback.service_rating}</Text>
+        </Card>
+      ))}
+    </Grid.Col>
+  
+        {/* Section for Order Management */}
+        <Grid.Col span={6}>
           <h2>Orders</h2>
-          <Table striped bordered hover>
+          <Table striped highlightOnHover>
             <thead>
               <tr>
                 <th>Order ID</th>
@@ -207,8 +244,30 @@ const SupplierDashboard = () => {
               ))}
             </tbody>
           </Table>
-        </Col>
-      </Row>
+        </Grid.Col>
+  
+        {/* Section for Updating Supplier Details */}
+        <Grid.Col span={12}>
+          <h2>Update Your Details</h2>
+          <form onSubmit={updateSupplierDetails}>
+            <TextInput
+              label="Name"
+              value={supplierName}
+              onChange={(e) => setSupplierName(e.target.value)}
+              placeholder="Enter your name"
+              mb="md"
+            />
+            <TextInput
+              label="Email"
+              value={supplierEmail}
+              onChange={(e) => setSupplierEmail(e.target.value)}
+              placeholder="Enter your email"
+              mb="md"
+            />
+            <Button type="submit">Update Details</Button>
+          </form>
+        </Grid.Col>
+      </Grid>
     </Container>
   );
 };

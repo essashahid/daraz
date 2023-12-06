@@ -1,19 +1,23 @@
 import React, { useState, useEffect } from 'react';
+import { Container, Button, Table, TextInput, Grid } from '@mantine/core';
 import axios from 'axios';
-import { Container, Row, Col, Card, Button, Table } from 'react-bootstrap';
 import api from '../../api';
 
 const ManagerDashboard = () => {
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
-  const managerID = localStorage.getItem("userID");
-  // State for analytics, user management, etc., can be added here
+  const [customers, setCustomers] = useState([]);
+  const managerId = localStorage.getItem("userID");
   const token = localStorage.getItem("token");
+  const [managerName, setManagerName] = useState('');
+  const [managerEmail, setManagerEmail] = useState('');
+  const [customerOrders, setCustomerOrders] = useState([]);
 
   useEffect(() => {
     fetchProducts();
     fetchOrders();
-    // Initialize other data here
+    fetchCustomers();
+    fetchAllCustomerOrders(); // new function to fetch orders for all customers
   }, []);
 
   const fetchProducts = async () => {
@@ -34,31 +38,96 @@ const ManagerDashboard = () => {
     }
   };
 
-  // Function to handle product deletion
+  const fetchCustomers = async () => {
+    try {
+      const response = await axios.get(`${api}/user/customers`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setCustomers(response.data.data);
+    } catch (error) {
+      console.error('Error fetching customers:', error);
+    }
+  };
+
+  const fetchAllCustomerOrders = async () => {
+    try {
+      const customerOrderPromises = customers.map(async (customer) => {
+        const response = await axios.get(`${api}/order/customer-orders/${customer._id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return response.data.orders;
+      });
+  
+      const allCustomerOrders = await Promise.all(customerOrderPromises);
+      const flattenedOrders = allCustomerOrders.flat(); // Flatten the array of arrays
+  
+      setCustomerOrders(flattenedOrders);
+    } catch (error) {
+      console.error('Error fetching orders for all customers:', error);
+    }
+  };
+
+  
+
   const deleteProduct = async (productId) => {
     try {
       await axios.delete(`${api}/product/${productId}`);
-      fetchProducts(); // Refresh the products list
+      fetchProducts();
     } catch (error) {
       console.error('Error deleting product:', error);
     }
   };
 
-  // Function to handle updating order status (example implementation)
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
       await axios.patch(`${api}/order/${orderId}`, { status: newStatus });
-      fetchOrders(); // Refresh the orders list
+      fetchOrders();
     } catch (error) {
       console.error('Error updating order status:', error);
     }
   };
 
+  const updateManagerDetails = async (event) => {
+    event.preventDefault();
+    try {
+      const response = await axios.put(
+        `${api}/user/update/${managerId}`,
+        { name: managerName, email: managerEmail },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.status === 200) {
+        alert("Manager details updated successfully");
+        localStorage.setItem("userName", managerName);
+        localStorage.setItem("userEmail", managerEmail);
+      }
+    } catch (error) {
+      console.error("Error updating manager details:", error);
+      alert("Failed to update manager details.");
+    }
+  };
+
+  // Placeholder function for viewing customer orders
+  const viewCustomerOrders = async (customerId) => {
+    try {
+      
+      const response = await axios.get(`${api}/order/customer-orders/${customerId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      console.log('Orders response:', response);
+      setCustomerOrders(response.data.orders);
+    } catch (error) {
+      console.error('Error fetching orders for customer:', error);
+    }
+  };
+  
+
   return (
     <Container>
       <h1>Manager Dashboard</h1>
-      <Row>
-        <Col>
+      <Grid>
+        {/* Section for Products */}
+        <Grid.Col span={6}>
           <h2>Products</h2>
           <Table striped bordered hover>
             <thead>
@@ -69,50 +138,90 @@ const ManagerDashboard = () => {
               </tr>
             </thead>
             <tbody>
-              {products.map((product) => (
-                <tr key={product._id}>
-                  <td>{product.name}</td>
-                  <td>${product.price}</td>
-                  <td>
-                    {/* Replace these with actual edit functionality or modals */}
-                    <Button variant="warning">Edit</Button>
-                    <Button variant="danger" onClick={() => deleteProduct(product._id)}>Delete</Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
+            {products && products.map((product) => (
+              <tr key={product._id}>
+                <td>{product.name}</td>
+                <td>${product.price}</td>
+                <td>
+                  <Button variant="light" onClick={() => alert('Edit functionality')}>Edit</Button>
+                  <Button variant="red" onClick={() => deleteProduct(product._id)}>Delete</Button>
+                </td>
+              </tr>
+            ))}
+                        </tbody>
           </Table>
-        </Col>
-        <Col>
-          <h2>Orders</h2>
-          {/* Orders Table or List */}
-          {/* This can be replaced with a more detailed component */}
+        </Grid.Col>
+  
+       {/* Section for Orders */}
+<Grid.Col span={12}>
+  <h2>Customer Orders</h2>
+  <Table striped bordered hover>
+    <thead>
+      <tr>
+        <th>Order ID</th>
+        <th>Amount</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {customerOrders && customerOrders.map((order) => (
+        <tr key={order._id}>
+          <td>{order._id}</td>
+          <td>${order.amount}</td>
+          <td>{order.status}</td>
+        </tr>
+      ))}
+    </tbody>
+  </Table>
+</Grid.Col>
+        
+        {/* Section for Customer Management */}
+        <Grid.Col span={12}>
+          <h2>Customers</h2>
           <Table striped bordered hover>
             <thead>
               <tr>
-                <th>Order ID</th>
-                <th>Amount</th>
-                <th>Status</th>
+                <th>Name</th>
+                <th>Email</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {orders.map((order) => (
-                <tr key={order._id}>
-                  <td>{order._id}</td>
-                  <td>${order.amount}</td>
-                  <td>{order.status}</td>
+              {customers.map((customer) => (
+                <tr key={customer._id}>
+                  <td>{customer.name}</td>
+                  <td>{customer.email}</td>
                   <td>
-                    {/* Replace with dropdown or modal for status update */}
-                    <Button variant="info" onClick={() => updateOrderStatus(order._id, 'Shipped')}>Mark as Shipped</Button>
+                    <Button onClick={() => viewCustomerOrders(customer._id)}>View Orders</Button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </Table>
-        </Col>
-      </Row>
-      {/* Additional sections for analytics, user management, etc. */}
+        </Grid.Col>
+
+        {/* Section for Updating Manager Details */}
+        <Grid.Col span={12}>
+          <h2>Update Your Details</h2>
+          <form onSubmit={updateManagerDetails}>
+            <TextInput
+              label="Name"
+              value={managerName}
+              onChange={(e) => setManagerName(e.target.value)}
+              placeholder="Enter your name"
+              mb="md"
+            />
+            <TextInput
+              label="Email"
+              value={managerEmail}
+              onChange={(e) => setManagerEmail(e.target.value)}
+              placeholder="Enter your email"
+              mb="md"
+            />
+            <Button type="submit">Update Details</Button>
+          </form>
+        </Grid.Col>
+      </Grid>
     </Container>
   );
 };

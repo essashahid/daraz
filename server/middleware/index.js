@@ -1,23 +1,29 @@
-import jwt from "jsonwebtoken";
-import config from "../config/index.js";
+import jwt from 'jsonwebtoken';
+import config from '../config/index.js';
 
-// need to get seperate middleware for admin
-// right now just checks if user is logged in
 export default function middleware(req, res, next) {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    return res.status(401).json({ status: 'error', message: 'Authorization header is missing' });
+  }
+
+  const parts = authHeader.split(' ');
+  if (parts.length !== 2 || parts[0] !== 'Bearer') {
+    return res.status(401).json({ status: 'error', message: 'Authorization header is malformed' });
+  }
+
   try {
-    const token = req.headers.authorization.split(" ")[1];
+    const token = parts[1];
     const decoded = jwt.verify(token, config.jwtSecret);
     req.customerId = decoded.customerId;
     next();
   } catch (err) {
     console.log(err);
     if (err instanceof jwt.TokenExpiredError) {
-      // Handle the specific case of an expired token
-      res.status(401).json({ status: "error", message: "Your session has expired, please log in again." });
+      res.status(401).json({ status: 'error', message: 'Your session has expired, please log in again.' });
     } else {
-      // Handle other kinds of errors
-      res.status(401).json({ status: "error", message: "Unauthorized" });
+      res.status(401).json({ status: 'error', message: 'Unauthorized' });
     }
   }
 }
-
