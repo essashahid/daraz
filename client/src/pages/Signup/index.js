@@ -61,13 +61,18 @@ const Signup = () => {
 
           {/* Email Input */}
           <TextInput
-            label="Email address"
-            placeholder="Enter email"
-            {...register('email', { required: 'Email is required' })}
-            error={errors.email?.message}
-            mt="md"
-          />
-
+          label="Email address"
+          placeholder="Enter email"
+          {...register('email', {
+            required: 'Email is required',
+            pattern: {
+              value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+              message: 'Invalid email format'
+            }
+          })}
+          error={errors.email?.message}
+          mt="md"
+        />
           {/* Password Input */}
           <PasswordInput
             label="Password"

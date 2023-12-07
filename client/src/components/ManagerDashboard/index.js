@@ -7,27 +7,31 @@ const ManagerDashboard = () => {
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [customers, setCustomers] = useState([]);
+  const [customerOrders, setCustomerOrders] = useState([]);
   const managerId = localStorage.getItem("userID");
   const token = localStorage.getItem("token");
+  const [showTooltip, setShowTooltip] = useState(false);
+
+
   const [managerName, setManagerName] = useState('');
   const [managerEmail, setManagerEmail] = useState('');
-  const [customerOrders, setCustomerOrders] = useState([]);
 
   useEffect(() => {
     fetchProducts();
     fetchOrders();
     fetchCustomers();
-    fetchAllCustomerOrders(); // new function to fetch orders for all customers
   }, []);
 
   const fetchProducts = async () => {
     try {
-      const response = await axios.get(`${api}/product/all`);
-      setProducts(response.data.products);
+      const response = await axios.get(`${api}/product/list`);
+      setProducts(response.data.data); // Since the response contains an array in the 'data' key
     } catch (error) {
       console.error('Error fetching products:', error);
     }
   };
+  
+
 
   const fetchOrders = async () => {
     try {
@@ -49,44 +53,17 @@ const ManagerDashboard = () => {
     }
   };
 
-  const fetchAllCustomerOrders = async () => {
-    try {
-      const customerOrderPromises = customers.map(async (customer) => {
-        const response = await axios.get(`${api}/order/customer-orders/${customer._id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        return response.data.orders;
-      });
-  
-      const allCustomerOrders = await Promise.all(customerOrderPromises);
-      const flattenedOrders = allCustomerOrders.flat(); // Flatten the array of arrays
-  
-      setCustomerOrders(flattenedOrders);
-    } catch (error) {
-      console.error('Error fetching orders for all customers:', error);
-    }
-  };
-
-  
-
   const deleteProduct = async (productId) => {
+    const url = `${api}/product/${productId}`;
+    console.log("Delete URL:", url); // Log the URL to verify it
+  
     try {
-      await axios.delete(`${api}/product/${productId}`);
+      await axios.delete(url);
       fetchProducts();
     } catch (error) {
       console.error('Error deleting product:', error);
     }
   };
-
-  const updateOrderStatus = async (orderId, newStatus) => {
-    try {
-      await axios.patch(`${api}/order/${orderId}`, { status: newStatus });
-      fetchOrders();
-    } catch (error) {
-      console.error('Error updating order status:', error);
-    }
-  };
-
   const updateManagerDetails = async (event) => {
     event.preventDefault();
     try {
@@ -107,26 +84,27 @@ const ManagerDashboard = () => {
     }
   };
 
-  // Placeholder function for viewing customer orders
   const viewCustomerOrders = async (customerId) => {
     try {
-      
       const response = await axios.get(`${api}/order/customer-orders/${customerId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      console.log('Orders response:', response);
-      setCustomerOrders(response.data.orders);
+      setCustomerOrders(response.data.data); // Assuming the response has an array of orders under 'data'
     } catch (error) {
       console.error('Error fetching orders for customer:', error);
     }
   };
-  
+
+  const toggleTooltip = () => {
+    setShowTooltip(!showTooltip);
+  };
+
 
   return (
     <Container>
       <h1>Manager Dashboard</h1>
       <Grid>
-        {/* Section for Products */}
+        {/* Section for Products
         <Grid.Col span={6}>
           <h2>Products</h2>
           <Table striped bordered hover>
@@ -139,42 +117,46 @@ const ManagerDashboard = () => {
             </thead>
             <tbody>
             {products && products.map((product) => (
-              <tr key={product._id}>
-                <td>{product.name}</td>
-                <td>${product.price}</td>
-                <td>
-                  <Button variant="light" onClick={() => alert('Edit functionality')}>Edit</Button>
-                  <Button variant="red" onClick={() => deleteProduct(product._id)}>Delete</Button>
-                </td>
-              </tr>
-            ))}
-                        </tbody>
-          </Table>
-        </Grid.Col>
-  
-       {/* Section for Orders */}
+
+                <tr key={product._id}>
+                  <td>{product.name}</td>
+                  <td>${product.price}</td>
+                  <td>
+                    <Button variant="light" onClick={() => alert('Edit functionality')}>Edit</Button>
+                    <Button variant="red" onClick={() => deleteProduct(product._id)}>Delete</Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table> */}
+        {/* </Grid.Col> */}
+
+        {/* Section for Customer Orders */}
 <Grid.Col span={12}>
   <h2>Customer Orders</h2>
-  <Table striped bordered hover>
-    <thead>
-      <tr>
-        <th>Order ID</th>
-        <th>Amount</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody>
-      {customerOrders && customerOrders.map((order) => (
-        <tr key={order._id}>
-          <td>{order._id}</td>
-          <td>${order.amount}</td>
-          <td>{order.status}</td>
+  {customerOrders.length > 0 ? (
+    <Table striped bordered hover>
+      <thead>
+        <tr>
+          <th>Order ID</th>
+          <th>Amount</th>
         </tr>
-      ))}
-    </tbody>
-  </Table>
+      </thead>
+      <tbody>
+        {customerOrders.map((order) => (
+          <tr key={order._id}>
+            <td>{order._id}</td>
+            <td>${order.amount}</td>
+            <td>{order.status}</td>
+          </tr>
+        ))}
+      </tbody>
+    </Table>
+  ) : (
+    <p>No orders placed yet.</p>
+  )}
 </Grid.Col>
-        
+
         {/* Section for Customer Management */}
         <Grid.Col span={12}>
           <h2>Customers</h2>

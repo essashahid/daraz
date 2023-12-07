@@ -48,17 +48,42 @@ const SupplierDashboard = () => {
   const fetchFeedbacks = useCallback(async () => {
     if (supplierId) {
       try {
-        // Update the endpoint to use the new API
-        const response = await axios.get(`${api}/supplier-feedback/${supplierId}`, {
+        const response = await axios.get(`${api}/product/supplier-orders/${supplierId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setFeedbacks(response.data.data);
+        const orders = response.data.data;
+  
+        const productRatings = new Map();
+  
+        orders.forEach(order => {
+          order.products.forEach(({ product, rating }) => {
+            // Ensure the product belongs to this supplier and the rating is available
+            if (product.supplierId === supplierId && rating) {
+              if (!productRatings.has(product._id)) {
+                productRatings.set(product._id, {
+                  name: product.name,
+                  ratings: []
+                });
+              }
+              // Assuming rating is a string, convert it to a number
+              productRatings.get(product._id).ratings.push(Number(rating));
+            }
+          });
+        });
+  
+        const formattedFeedbacks = Array.from(productRatings.values()).map(({ name, ratings }) => ({
+          productName: name,
+          averageRating: ratings.length ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(2) : 'No ratings'
+        }));
+  
+        setFeedbacks(formattedFeedbacks);
       } catch (error) {
         console.error("Error fetching feedbacks:", error);
         setFeedbacks([]);
       }
     }
   }, [supplierId, token]);
+  
 
   useEffect(() => {
     fetchProducts();
@@ -170,13 +195,13 @@ const SupplierDashboard = () => {
               placeholder="Enter price"
               mb="md"
             />
-            <NumberInput
+            {/* <NumberInput
               label="Rating"
               value={customProductRating}
               onChange={(value) => setCustomProductRating(value)}
               placeholder="Enter rating"
               mb="md"
-            />
+            /> */}
             <NumberInput
               label="In Stock"
               value={customProductInStock}
@@ -212,18 +237,21 @@ const SupplierDashboard = () => {
           </Table>
         </Grid.Col>
 
-        <Grid.Col span={12}>
-      <h2>Feedback on Your Products</h2>
-      {feedbacks.map(feedback => (
-        <Card key={feedback._id}>
-          <Text>Product: {feedback.pid.name}</Text>
-          <Text>Supplier Rating: {feedback.supplier_rating}</Text>
-          <Text>Service Rating: {feedback.service_rating}</Text>
-        </Card>
-      ))}
-    </Grid.Col>
-  
-        {/* Section for Order Management */}
+          <Grid.Col span={12}>
+          <h2>Feedback on Your Products</h2>
+          {feedbacks.length > 0 ? (
+            feedbacks.map(feedback => (
+              <Card key={feedback.productName}>
+                <Text>Product: {feedback.productName}</Text>
+                <Text>Average Rating: {feedback.averageRating}</Text>
+              </Card>
+            ))
+          ) : (
+            <Text>No feedback available</Text>
+          )}
+          </Grid.Col>
+
+        {/* Section for Order Management
         <Grid.Col span={6}>
           <h2>Orders</h2>
           <Table striped highlightOnHover>
@@ -244,7 +272,7 @@ const SupplierDashboard = () => {
               ))}
             </tbody>
           </Table>
-        </Grid.Col>
+        </Grid.Col> */}
   
         {/* Section for Updating Supplier Details */}
         <Grid.Col span={12}>

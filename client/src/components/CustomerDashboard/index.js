@@ -92,7 +92,7 @@ const CustomerDashboard = () => {
   const [orderFeedbacks, setOrderFeedbacks] = useState([]);
 
   useEffect(() => {
-    console.log("orderFeedbacks", orderFeedbacks);
+    // console.log("orderFeedbacks", orderFeedbacks);
   }, [orderFeedbacks]);
   const feedbackMutation = useMutation({
     mutationKey: [submitFeedbackKey],

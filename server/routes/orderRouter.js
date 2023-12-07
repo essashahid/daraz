@@ -201,4 +201,32 @@ orderRouter.get("/all", async (req, res) => {
   }
 });
 
+orderRouter.get('/supplier-feedback/:supplierId', async (req, res) => {
+  try {
+    const supplierOrders = await OrderModel.find({ "products.supplierId": req.params.supplierId })
+      .populate({
+        path: 'products.product',
+        match: { supplierId: req.params.supplierId }
+      });
+
+    // Extract feedback from these orders
+    const feedbacks = supplierOrders.map(order => {
+      return order.products
+        .filter(product => product.supplierId.toString() === req.params.supplierId)
+        .map(product => {
+          return {
+            productId: product.product._id,
+            productName: product.product.name,
+            feedback: product.feedback // Assuming this is how feedback is stored
+          };
+        });
+    }).flat();
+
+    res.status(200).json({ status: "success", data: feedbacks });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: "error", message: "Error retrieving supplier feedback" });
+  }
+});
+
 export default orderRouter;

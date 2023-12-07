@@ -198,4 +198,17 @@ productRouter.get("/all", async (req, res) => {
   }
 });
 
+productRouter.delete("/:productId", async (req, res) => {
+  try {
+    const deletedProduct = await ProductModel.findByIdAndRemove(req.params.productId);
+    if (!deletedProduct) {
+      return res.status(404).json({ status: "error", message: "Product not found" });
+    }
+    res.status(200).json({ status: "success", message: "Product deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: "error", message: "Error deleting product" });
+  }
+});
+
 export default productRouter;
