@@ -156,8 +156,7 @@ Notes:
 <div align="center">
   <img src="client/src/components/Daraz-Logo.png" alt="Daraz UI" height="120" />
   <br/>
-  <sub>Branding preview. Replace with app screenshots as you iterate.</sub>
-  <br/><br/>
+
 </div>
 
 ---
